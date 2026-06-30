@@ -1,8 +1,9 @@
 // Data access layer — the sole fetch surface for NSE Pulse
 import { getLatestDate as coreLatestDate } from './core.js';
 
+// Relative path works on any domain (GitHub Pages, custom domain, localhost)
 const CONFIG = {
-  dataBaseUrl: 'https://bmdeshmukh18.github.io/briefing/data',
+  dataBaseUrl: './data',
   accessControlEnabled: false,
   adminViewEnabled: false,
 };
