@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "date": "2026-06-22",
+    "session_status": "Trading",
+    "market_tone": "Cautiously bullish with IT leadership"
+  },
+  "summary": {
+    "nifty50": { "close": 24580.5, "change_pct": 0.73 },
+    "sensex": { "close": 80924.3, "change_pct": 0.68 },
+    "broader_market": { "smallcap_pct": 1.2, "midcap_pct": 0.9 },
+    "breadth": { "nifty500_advances": 312, "nifty500_declines": 188 },
+    "sectors": {
+      "leaders": ["IT", "Auto", "Pharma"],
+      "laggards": ["FMCG", "Metals"],
+      "count_advanced": 8
+    },
+    "key_gainers": [
+      { "symbol": "INFY", "change_pct": 3.1 },
+      { "symbol": "TCS", "change_pct": 2.4 },
+      { "symbol": "WIPRO", "change_pct": 2.1 }
+    ],
+    "key_losers": [
+      { "symbol": "HDFCBANK", "change_pct": -1.8 },
+      { "symbol": "ITC", "change_pct": -1.2 }
+    ],
+    "institutional_flows": { "fii_net_cr": -850.5, "dii_net_cr": 1240.0 },
+    "macro": { "brent_crude": 84.2, "india_10y_yield": 6.98 }
+  },
+  "triggers": {
+    "domestic": ["RBI liquidity stance", "Q1 earnings season begins", "Monsoon progress tracker"],
+    "global": ["US Fed minutes release", "Brent crude volatility", "China PMI data"]
+  },
+  "deep_dive": {
+    "full_text": "IT sector continues to outperform driven by strong deal momentum and rupee depreciation. Infosys and TCS both reported better-than-expected deal wins. FII selling continues for the third consecutive session, but DII absorption remains robust, preventing deeper correction.\n\nKey levels: Nifty support at 24,300–24,400 zone; resistance at 24,750–24,800. The broader market held up well with midcaps gaining 0.9% and smallcaps up 1.2%, suggesting healthy risk appetite beneath the large-cap surface.\n\nWatch for RBI commentary on liquidity and any global risk-off signals from the US Fed minutes tonight."
+  },
+  "outlook": {
+    "base_case": "Range-bound with positive bias, IT leading",
+    "scenarios": [
+      { "name": "Bullish breakout", "probability": 45, "range_low": 24700, "range_high": 24900 },
+      { "name": "Range-bound", "probability": 35, "range_low": 24400, "range_high": 24700 },
+      { "name": "Mild correction", "probability": 20, "range_low": 24100, "range_high": 24400 }
+    ],
+    "support_levels": [24300, 24100, 23850],
+    "resistance_levels": [24750, 24900, 25100],
+    "key_watch": ["FII flow direction", "IT sector earnings", "Crude oil above $85", "US Fed minutes"]
+  },
+  "prediction_result": {
+    "actual_close": 24612.0,
+    "actual_change_pct": 0.86,
+    "matched_scenario": "Bullish breakout",
+    "accuracy_tag": "Correct",
+    "verified_at": "2026-06-22T11:00:00Z"
+  },
+  "admin_notes": null
+}

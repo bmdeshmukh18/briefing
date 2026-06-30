@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="terminal">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NSE Pulse — Daily NSE market briefing">
+  <title>NSE Pulse</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────────── -->
+  <header class="site-header" role="banner">
+    <div class="site-logo">
+      <svg class="logo-pulse" viewBox="0 0 28 16" aria-hidden="true" width="28" height="16">
+        <path d="M0 10 L5 10 L8 3 L11 14 L14 1 L17 12 L20 10 L28 10" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      NSE Pulse
+    </div>
+
+    <div class="header-controls">
+      <select id="date-nav" class="date-nav-select" aria-label="Select briefing date">
+        <option disabled>Loading…</option>
+      </select>
+
+      <div class="theme-switcher" role="group" aria-label="Select theme">
+        <button class="theme-swatch active" data-theme="terminal" title="Terminal (dark cobalt)" aria-label="Terminal theme"></button>
+        <button class="theme-swatch" data-theme="daylight" title="Daylight (light)" aria-label="Daylight theme"></button>
+        <button class="theme-swatch" data-theme="dusk" title="Dusk (warm dark)" aria-label="Dusk theme"></button>
+        <button class="theme-swatch" data-theme="forest" title="Forest (dark green)" aria-label="Forest theme"></button>
+        <button id="toggle-dark-btn" class="toggle-dark-btn" title="Toggle light/dark" aria-label="Toggle light/dark mode">☀</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Main ───────────────────────────────────────────────── -->
+  <main id="main-content" role="main">
+
+    <!-- Skeleton loading state -->
+    <div id="skeleton-screen" class="main-content">
+      <div class="skel-hero">
+        <div class="skeleton skel-card"></div>
+        <div class="skeleton skel-card"></div>
+        <div class="skeleton skel-card"></div>
+        <div class="skeleton skel-card"></div>
+      </div>
+      <div class="skeleton skel-section"></div>
+      <div class="skeleton skel-section"></div>
+      <div style="padding:1.5rem">
+        <div class="skeleton skel-row w-75"></div>
+        <div class="skeleton skel-row w-50"></div>
+        <div class="skeleton skel-row w-75"></div>
+      </div>
+    </div>
+
+    <!-- Briefing content -->
+    <div id="briefing-root" hidden></div>
+
+    <!-- Error state -->
+    <div id="error-root" class="main-content" hidden></div>
+
+  </main>
+
+  <!-- ── Scripts (ES modules) ───────────────────────────────── -->
+  <script type="module" src="assets/js/app.js"></script>
+
+</body>
+</html>
