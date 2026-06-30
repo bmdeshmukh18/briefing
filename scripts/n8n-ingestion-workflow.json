@@ -1,0 +1,206 @@
+{
+  "name": "NSE Pulse — Ingestion Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": { "item": [{ "mode": "everyMinute" }] },
+        "filters": { "q": "subject:\"NSE Market Briefing\" is:unread" },
+        "options": {}
+      },
+      "id": "gmail-trigger",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract email body, subject, and arrival timestamp\nconst email = items[0].json;\nconst subject = email.subject || '';\nconst arrivalTs = email.date || new Date().toISOString();\n\n// Get plain text body — prefer text/plain, fallback to stripping HTML\nlet body = '';\nif (email.text) {\n  body = email.text;\n} else if (email.textHtml) {\n  body = email.textHtml.replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim();\n} else if (email.snippet) {\n  body = email.snippet;\n}\n\nif (!body || body.trim().length < 50) {\n  throw new Error(`PARSE_FAIL: Email body too short or empty. Subject: ${subject}, Arrival: ${arrivalTs}`);\n}\n\nreturn [{ json: { body, subject, arrivalTs } }];"
+      },
+      "id": "extract-body",
+      "name": "Extract Email Body",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"model\": \"gpt-4o\",\n  \"response_format\": { \"type\": \"json_object\" },\n  \"max_tokens\": 4096,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a financial data extractor. Extract NSE market briefing data from the provided email text and return ONLY a JSON object conforming exactly to this schema. NEVER omit any field — use null for any value that is absent or unclear.\\n\\nSchema:\\n{\\n  \\\"meta\\\": {\\n    \\\"date\\\": \\\"YYYY-MM-DD\\\",\\n    \\\"session_status\\\": \\\"Trading\\\" or \\\"Holiday\\\",\\n    \\\"market_tone\\\": string (<=60 chars) or null\\n  },\\n  \\\"summary\\\": {\\n    \\\"nifty50\\\": { \\\"close\\\": number or null, \\\"change_pct\\\": number or null },\\n    \\\"sensex\\\": { \\\"close\\\": number or null, \\\"change_pct\\\": number or null },\\n    \\\"broader_market\\\": { \\\"smallcap_pct\\\": number or null, \\\"midcap_pct\\\": number or null },\\n    \\\"breadth\\\": { \\\"nifty500_advances\\\": number or null, \\\"nifty500_declines\\\": number or null },\\n    \\\"sectors\\\": { \\\"leaders\\\": [string], \\\"laggards\\\": [string], \\\"count_advanced\\\": number or null },\\n    \\\"key_gainers\\\": [{ \\\"symbol\\\": string, \\\"change_pct\\\": number or null }],\\n    \\\"key_losers\\\": [{ \\\"symbol\\\": string, \\\"change_pct\\\": number or null }],\\n    \\\"institutional_flows\\\": { \\\"fii_net_cr\\\": number or null, \\\"dii_net_cr\\\": number or null },\\n    \\\"macro\\\": { \\\"brent_crude\\\": number or null, \\\"india_10y_yield\\\": number or null }\\n  },\\n  \\\"triggers\\\": { \\\"domestic\\\": [string], \\\"global\\\": [string] },\\n  \\\"deep_dive\\\": { \\\"full_text\\\": string or null },\\n  \\\"outlook\\\": {\\n    \\\"base_case\\\": string or null,\\n    \\\"scenarios\\\": [ { \\\"name\\\": string, \\\"probability\\\": 0-100, \\\"range_low\\\": number, \\\"range_high\\\": number } ],\\n    \\\"support_levels\\\": [number],\\n    \\\"resistance_levels\\\": [number],\\n    \\\"key_watch\\\": [string]\\n  },\\n  \\\"prediction_result\\\": {\\n    \\\"actual_close\\\": null,\\n    \\\"actual_change_pct\\\": null,\\n    \\\"matched_scenario\\\": null,\\n    \\\"accuracy_tag\\\": null,\\n    \\\"verified_at\\\": null\\n  },\\n  \\\"admin_notes\\\": null\\n}\\n\\nRules:\\n- prediction_result fields MUST always be null (filled by automation later)\\n- session_status: use Trading unless briefing explicitly says holiday\\n- date: infer from briefing content or today's date\\n- scenarios: 1-5 items, range_low must be <= range_high, probability 0-100\\n- Return ONLY the JSON object, no prose\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"={{ $json.body }}\"\n    }\n  ]\n}",
+        "options": { "timeout": 120000 }
+      },
+      "id": "openai-parse",
+      "name": "OpenAI Parser",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Validate parsed briefing against Per-Day JSON Schema\nconst response = items[0].json;\nconst subject = $node['Extract Email Body'].json.subject;\nconst arrivalTs = $node['Extract Email Body'].json.arrivalTs;\n\nlet parsed;\ntry {\n  const content = response.choices?.[0]?.message?.content;\n  if (!content) throw new Error('No content in OpenAI response');\n  parsed = JSON.parse(content);\n} catch (e) {\n  return [{ json: { valid: false, error: 'PARSE_FAIL', message: e.message, subject, arrivalTs } }];\n}\n\n// Basic schema checks\nconst { meta, summary, triggers, deep_dive, outlook, prediction_result } = parsed || {};\n\nif (!meta?.date || !/^\\d{4}-\\d{2}-\\d{2}$/.test(meta.date)) {\n  return [{ json: { valid: false, error: 'SCHEMA_FAIL', message: 'meta.date missing or invalid', subject, arrivalTs } }];\n}\nif (!['Trading','Holiday'].includes(meta.session_status)) {\n  return [{ json: { valid: false, error: 'SCHEMA_FAIL', message: 'meta.session_status invalid', subject, arrivalTs } }];\n}\nif (!summary || !triggers || !deep_dive || !outlook || !prediction_result) {\n  return [{ json: { valid: false, error: 'SCHEMA_FAIL', message: 'Missing top-level keys', subject, arrivalTs } }];\n}\nif (!Array.isArray(outlook.scenarios) || outlook.scenarios.length < 1 || outlook.scenarios.length > 5) {\n  return [{ json: { valid: false, error: 'SCHEMA_FAIL', message: 'outlook.scenarios must be 1-5 items', subject, arrivalTs } }];\n}\nfor (const s of outlook.scenarios) {\n  if (s.probability < 0 || s.probability > 100) {\n    return [{ json: { valid: false, error: 'SCHEMA_FAIL', message: `scenario probability out of range: ${s.probability}`, subject, arrivalTs } }];\n  }\n  if (s.range_low > s.range_high) {\n    return [{ json: { valid: false, error: 'SCHEMA_FAIL', message: `range_low > range_high in scenario: ${s.name}`, subject, arrivalTs } }];\n  }\n}\n\nreturn [{ json: { valid: true, briefing: parsed, date: meta.date, subject, arrivalTs } }];"
+      },
+      "id": "schema-validate",
+      "name": "Validate Schema",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [{ "value1": "={{ $json.valid }}", "value2": true }]
+        }
+      },
+      "id": "branch-valid",
+      "name": "Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Prepare GitHub API calls — encode briefing JSON as base64\nconst { briefing, date } = items[0].json;\nconst content = Buffer.from(JSON.stringify(briefing, null, 2)).toString('base64');\nreturn [{ json: { date, content, path: `data/briefings/${date}.json` } }];"
+      },
+      "id": "prep-commit",
+      "name": "Prepare Commit Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.github.com/repos/bmdeshmukh18/briefing/contents/{{ $json.path }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $credentials.githubToken }}" },
+            { "name": "Accept", "value": "application/vnd.github.v3+json" }
+          ]
+        },
+        "options": { "ignore404": true }
+      },
+      "id": "get-existing-briefing",
+      "name": "Get Existing Briefing SHA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1560, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Commit or overwrite briefing file via GitHub API\nconst { date, content, path } = $node['Prepare Commit Data'].json;\nconst existingResponse = items[0].json;\nconst sha = existingResponse?.sha || undefined;\n\nconst body = {\n  message: `Add briefing for ${date}`,\n  content,\n  branch: 'main'\n};\nif (sha) body.sha = sha;\n\nreturn [{ json: { date, path, body: JSON.stringify(body) } }];"
+      },
+      "id": "prep-github-body",
+      "name": "Prep GitHub Body",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1780, 200]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.github.com/repos/bmdeshmukh18/briefing/contents/data/briefings/{{ $node['Prepare Commit Data'].json.date }}.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $credentials.githubToken }}" },
+            { "name": "Accept", "value": "application/vnd.github.v3+json" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}",
+        "options": { "timeout": 30000 }
+      },
+      "id": "commit-briefing",
+      "name": "Commit Briefing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2000, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Update index.json — fetch current, add date if missing, re-commit\nconst date = $node['Prepare Commit Data'].json.date;\n\n// Fetch current index.json\nlet indexSha = null;\nlet currentDates = [];\ntry {\n  const indexRes = await $helpers.request({\n    method: 'GET',\n    url: 'https://api.github.com/repos/bmdeshmukh18/briefing/contents/data/index.json',\n    headers: {\n      'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,\n      'Accept': 'application/vnd.github.v3+json'\n    },\n    json: true\n  });\n  indexSha = indexRes.sha;\n  currentDates = JSON.parse(Buffer.from(indexRes.content, 'base64').toString()).dates || [];\n} catch (e) { /* file may not exist yet */ }\n\nif (!currentDates.includes(date)) {\n  currentDates = [...currentDates, date].sort();\n}\n\nconst newContent = Buffer.from(JSON.stringify({ dates: currentDates }, null, 2)).toString('base64');\n\nconst body = { message: `Update index for ${date}`, content: newContent, branch: 'main' };\nif (indexSha) body.sha = indexSha;\n\nawait $helpers.request({\n  method: 'PUT',\n  url: 'https://api.github.com/repos/bmdeshmukh18/briefing/contents/data/index.json',\n  headers: {\n    'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,\n    'Content-Type': 'application/json',\n    'Accept': 'application/vnd.github.v3+json'\n  },\n  body: JSON.stringify(body)\n});\n\nreturn [{ json: { success: true, date } }];"
+      },
+      "id": "update-index",
+      "name": "Update index.json",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [2220, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Update history.json — fetch current, upsert row, re-commit\nconst date = $node['Prepare Commit Data'].json.date;\nconst briefing = $node['Validate Schema'].json.briefing;\n\nconst newRow = {\n  date,\n  nifty_close: briefing.summary?.nifty50?.close ?? null,\n  nifty_change_pct: briefing.summary?.nifty50?.change_pct ?? null,\n  fii_net_cr: briefing.summary?.institutional_flows?.fii_net_cr ?? null,\n  dii_net_cr: briefing.summary?.institutional_flows?.dii_net_cr ?? null,\n  advances: briefing.summary?.breadth?.nifty500_advances ?? null,\n  declines: briefing.summary?.breadth?.nifty500_declines ?? null\n};\n\nlet histSha = null;\nlet series = [];\ntry {\n  const histRes = await $helpers.request({\n    method: 'GET',\n    url: 'https://api.github.com/repos/bmdeshmukh18/briefing/contents/data/history.json',\n    headers: {\n      'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,\n      'Accept': 'application/vnd.github.v3+json'\n    },\n    json: true\n  });\n  histSha = histRes.sha;\n  series = JSON.parse(Buffer.from(histRes.content, 'base64').toString()).series || [];\n} catch (e) { /* file may not exist yet */ }\n\nseries = [...series.filter(r => r.date !== date), newRow].sort((a,b) => a.date < b.date ? -1 : 1);\n\nconst newContent = Buffer.from(JSON.stringify({ series }, null, 2)).toString('base64');\nconst body = { message: `Update history for ${date}`, content: newContent, branch: 'main' };\nif (histSha) body.sha = histSha;\n\nawait $helpers.request({\n  method: 'PUT',\n  url: 'https://api.github.com/repos/bmdeshmukh18/briefing/contents/data/history.json',\n  headers: {\n    'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,\n    'Content-Type': 'application/json',\n    'Accept': 'application/vnd.github.v3+json'\n  },\n  body: JSON.stringify(body)\n});\n\nreturn [{ json: { success: true, date } }];"
+      },
+      "id": "update-history",
+      "name": "Update history.json",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [2440, 200]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $env.ADMIN_EMAIL }}",
+        "subject": "=NSE Pulse ✗ Parse Failed: {{ $json.subject }}",
+        "message": "=Parse failure for briefing email.\n\nSubject: {{ $json.subject }}\nArrival: {{ $json.arrivalTs }}\nError: {{ $json.message }}\n\nThe Data Store was NOT modified."
+      },
+      "id": "notify-parse-fail",
+      "name": "Notify Parse Failure",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [1340, 440]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $env.ADMIN_EMAIL }}",
+        "subject": "=NSE Pulse ✗ Schema Failed: {{ $json.subject }}",
+        "message": "=Schema validation failure for briefing email.\n\nSubject: {{ $json.subject }}\nArrival: {{ $json.arrivalTs }}\nError: {{ $json.message }}\n\nThe Data Store was NOT modified."
+      },
+      "id": "notify-schema-fail",
+      "name": "Notify Schema Failure",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [1340, 560]
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": { "main": [[{ "node": "Extract Email Body", "type": "main", "index": 0 }]] },
+    "Extract Email Body": { "main": [[{ "node": "OpenAI Parser", "type": "main", "index": 0 }]] },
+    "OpenAI Parser": { "main": [[{ "node": "Validate Schema", "type": "main", "index": 0 }]] },
+    "Validate Schema": { "main": [[{ "node": "Valid?", "type": "main", "index": 0 }]] },
+    "Valid?": {
+      "main": [
+        [{ "node": "Prepare Commit Data", "type": "main", "index": 0 }],
+        [{ "node": "Notify Schema Failure", "type": "main", "index": 0 }]
+      ]
+    },
+    "Prepare Commit Data": { "main": [[{ "node": "Get Existing Briefing SHA", "type": "main", "index": 0 }]] },
+    "Get Existing Briefing SHA": { "main": [[{ "node": "Prep GitHub Body", "type": "main", "index": 0 }]] },
+    "Prep GitHub Body": { "main": [[{ "node": "Commit Briefing", "type": "main", "index": 0 }]] },
+    "Commit Briefing": { "main": [[{ "node": "Update index.json", "type": "main", "index": 0 }]] },
+    "Update index.json": { "main": [[{ "node": "Update history.json", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "tags": ["nse-pulse"],
+  "triggerCount": 1,
+  "updatedAt": "2026-06-30T00:00:00.000Z",
+  "versionId": "1"
+}
