@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Redirecting...</title>
+  <script>
+    // Redirect to index.html for directory-like requests
+    var path = window.location.pathname;
+    // Avoid redirecting root or actual files with extensions
+    if (path !== '/' && !path.includes('.')) {
+      // Ensure ends with slash
+      if (!path.endsWith('/')) {
+        path = path + '/';
+      }
+      window.location.replace(path + 'index.html');
+    }
+  </script>
+</head>
+<body>
+  If you are not redirected automatically, follow this <a href="/">link</a>.
+</body>
+</html>
