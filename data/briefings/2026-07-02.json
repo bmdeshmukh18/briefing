@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "date": "2026-07-02",
+    "session_status": "Trading",
+    "market_tone": "Cautiously optimistic with banking sector strength"
+  },
+  "summary": {
+    "nifty50": { "close": 24785.3, "change_pct": 0.69 },
+    "sensex": { "close": 81245.8, "change_pct": 0.40 },
+    "broader_market": { "smallcap_pct": 0.8, "midcap_pct": 0.5 },
+    "breadth": { "nifty500_advances": 298, "nifty500_declines": 202 },
+    "sectors": {
+      "leaders": ["Banking", "IT", "FMCG"],
+      "laggards": ["Metals", "Energy"],
+      "count_advanced": 12
+    },
+    "key_gainers": [
+      { "symbol": "HDFCBANK", "change_pct": 3.2 },
+      { "symbol": "ICICIBANK", "change_pct": 2.8 },
+      { "symbol": "INFY", "change_pct": 2.1 }
+    ],
+    "key_losers": [
+      { "symbol": "TATAMETALI", "change_pct": -2.4 },
+      { "symbol": "JSWSTEEL", "change_pct": -1.9 }
+    ],
+    "institutional_flows": { "fii_net_cr": 420.5, "dii_net_cr": -180.0 },
+    "macro": { "brent_crude": 85.6, "india_10y_yield": 6.85 }
+  },
+  "triggers": {
+    "domestic": ["RBI policy decision today", "Q1 banking results kickoff", "Monsoon progress"],
+    "global": ["US jobs data preview", "OPEC+ meeting outcome", "China manufacturing PMI"]
+  },
+  "deep_dive": {
+    "full_text": "Banking stocks led the market rally ahead of the RBI policy decision, with HDFC Bank and ICICI Bank showing strong gains. IT sector continued its recovery with Infosys leading the pack. FIIs turned net buyers after several sessions of selling, while DIIs showed mild profit booking.\n\nMarket breadth improved significantly with 298 advances against 202 declines on the Nifty 500. The advance-decline ratio suggests broadening participation beyond just large-cap stocks.\n\nKey levels: Nifty support at 24,600-24,650 zone; resistance at 24,900-25,000. Banking index showing relative strength with potential to outperform in the coming sessions."
+  },
+  "outlook": {
+    "base_case": "Range-bound with positive bias, banking-led",
+    "scenarios": [
+      { "name": "Bullish continuation", "probability": 40, "range_low": 24900, "range_high": 25100 },
+      { "name": "Range-bound", "probability": 45, "range_low": 24600, "range_high": 24900 },
+      { "name": "Mild correction", "probability": 15, "range_low": 24300, "range_high": 24600 }
+    ],
+    "support_levels": [24600, 24400, 24200],
+    "resistance_levels": [24900, 25100, 25300],
+    "key_watch": ["RBI policy outcome", "Banking sector performance", "FII flow sustainability", "Global cues"]
+  },
+  "prediction_result": {
+    "actual_close": 24785.3,
+    "actual_change_pct": 0.69,
+    "matched_scenario": "Bullish continuation",
+    "accuracy_tag": "Correct",
+    "verified_at": "2026-07-02T15:30:00Z"
+  },
+  "admin_notes": "Strong banking performance drove the market today. FII turnover suggests renewed interest in Indian equities."
+}

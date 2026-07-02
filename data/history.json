@@ -14,6 +14,7 @@
     { "date": "2026-06-17", "nifty_close": 24512.1, "nifty_change_pct": 0.91, "fii_net_cr": 640.0, "dii_net_cr": 720.5, "advances": 371, "declines": 129 },
     { "date": "2026-06-18", "nifty_close": 24478.3, "nifty_change_pct": -0.14, "fii_net_cr": -310.0, "dii_net_cr": 980.0, "advances": 278, "declines": 222 },
     { "date": "2026-06-19", "nifty_close": 24403.7, "nifty_change_pct": -0.30, "fii_net_cr": -920.0, "dii_net_cr": 1180.5, "advances": 241, "declines": 259 },
-    { "date": "2026-06-22", "nifty_close": 24612.0, "nifty_change_pct": 0.86, "fii_net_cr": -850.5, "dii_net_cr": 1240.0, "advances": 312, "declines": 188 }
+    { "date": "2026-06-22", "nifty_close": 24612.0, "nifty_change_pct": 0.86, "fii_net_cr": -850.5, "dii_net_cr": 1240.0, "advances": 312, "declines": 188 },
+    { "date": "2026-07-02", "nifty_close": 24785.3, "nifty_change_pct": 0.69, "fii_net_cr": 420.5, "dii_net_cr": -180.0, "advances": 298, "declines": 202 }
   ]
 }
