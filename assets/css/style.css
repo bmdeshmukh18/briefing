@@ -308,6 +308,21 @@ canvas { max-width: 100%; }
 .breadth-dec { background: var(--negative); flex: 1; }
 .breadth-labels { display: flex; justify-content: space-between; margin-top: 0.35rem; font-family: var(--mono); font-size: 0.75rem; }
 
+.admin-link {
+    color: var(--accent);
+    font-size: 0.85rem;
+    padding: 0.2rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    margin-left: 0.5rem;
+    transition: background 0.2s, border-color 0.2s;
+}
+.admin-link:hover {
+    background: var(--surface2);
+    border-color: var(--accent);
+}
+
 /* ── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .hero-strip { grid-template-columns: repeat(2, 1fr); }
