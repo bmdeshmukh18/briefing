@@ -7,7 +7,10 @@
       "name": "Error Trigger",
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
-      "position": [240, 300]
+      "position": [
+        240,
+        300
+      ]
     },
     {
       "parameters": {
@@ -19,16 +22,27 @@
       "name": "Notify Telegram",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.1,
-      "position": [460, 300]
+      "position": [
+        460,
+        300
+      ]
     }
   ],
   "connections": {
-    "Error Trigger": { "main": [[{ "node": "Notify Telegram", "type": "main", "index": 0 }]] }
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Notify Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1" },
-  "staticData": null,
-  "tags": ["nse-pulse"],
-  "triggerCount": 1,
-  "updatedAt": "2026-07-03T00:00:00.000Z",
+  "settings": {
+    "executionOrder": "v1"
+  },
   "versionId": "1"
 }
