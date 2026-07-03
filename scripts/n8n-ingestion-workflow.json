@@ -26,7 +26,7 @@
     },
     {
       "parameters": {
-        "functionCode": "// Extract email body, subject, and arrival timestamp\nconst email = items[0].json;\nconst subject = email.subject || '';\nconst arrivalTs = email.date || new Date().toISOString();\n\n// Get plain text body — prefer text/plain, fallback to stripping HTML\nlet body = '';\nif (email.text) {\n  body = email.text;\n} else if (email.textHtml) {\n  body = email.textHtml.replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim();\n} else if (email.snippet) {\n  body = email.snippet;\n}\n\nif (!body || body.trim().length < 50) {\n  throw new Error(`PARSE_FAIL: Email body too short or empty. Subject: ${subject}, Arrival: ${arrivalTs}`);\n}\n\nreturn [{ json: { body, subject, arrivalTs } }];"
+        "functionCode": "// Extract email body, subject, and arrival timestamp.\n// With the Gmail Trigger's \"Simplify\" option ON (the default), n8n only returns\n// a short `snippet` preview — never the full body — which silently truncates the\n// email before the STRUCTURED DATA section. So this reads the raw Gmail API\n// message resource (returned when Simplify is OFF) directly: walk payload.parts\n// for a text/plain part (falling back to text/html), base64url-decode it, and\n// only fall back to the simplified fields/snippet if no raw payload is present.\nconst msg = items[0].json;\nconst subject = (msg.payload?.headers || []).find(h => h.name === 'Subject')?.value || msg.subject || '';\nconst arrivalTs = msg.internalDate ? new Date(Number(msg.internalDate)).toISOString() : (msg.date || new Date().toISOString());\n\nfunction b64urlDecode(data) {\n  if (!data) return '';\n  return Buffer.from(data.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8');\n}\n\nfunction findPart(payload, mimeType) {\n  if (!payload) return null;\n  if (payload.mimeType === mimeType && payload.body?.data) return payload.body.data;\n  for (const part of payload.parts || []) {\n    const found = findPart(part, mimeType);\n    if (found) return found;\n  }\n  return null;\n}\n\nlet body = '';\nif (msg.payload) {\n  const plainData = findPart(msg.payload, 'text/plain');\n  if (plainData) {\n    body = b64urlDecode(plainData);\n  } else {\n    const htmlData = findPart(msg.payload, 'text/html');\n    if (htmlData) body = b64urlDecode(htmlData).replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim();\n  }\n}\n\n// Fallbacks for n8n's simplified-mode field names, in case Simplify stays ON.\nif (!body && msg.text) body = msg.text;\nelse if (!body && msg.textHtml) body = msg.textHtml.replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim();\nelse if (!body && msg.html) body = msg.html.replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim();\nelse if (!body && msg.snippet) body = msg.snippet;\n\nif (!body || body.trim().length < 50) {\n  throw new Error(`PARSE_FAIL: Email body too short or empty. Subject: ${subject}, Arrival: ${arrivalTs}`);\n}\n\nreturn [{ json: { body, subject, arrivalTs } }];"
       },
       "id": "extract-body",
       "name": "Extract Email Body",
@@ -436,5 +436,5 @@
   ],
   "triggerCount": 1,
   "updatedAt": "2026-07-03T00:00:00.000Z",
-  "versionId": "3"
+  "versionId": "4"
 }
