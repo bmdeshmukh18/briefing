@@ -40,6 +40,14 @@ describe('extractJsonBlock: balanced-brace fallback', () => {
     expect(extractJsonBlock(undefined)).toBeNull();
     expect(extractJsonBlock(42)).toBeNull();
   });
+
+  it('parses a JSON block with a raw newline hard-wrapped inside a string value', () => {
+    // Simulates a mail transfer agent/plain-text renderer hard-wrapping a long
+    // single-line JSON blob, injecting a literal newline mid-string — which
+    // JSON.parse otherwise rejects as a bad control character.
+    const wrapped = '```json\n{"note": "a long sentence that got hard\nwrapped mid-value"}\n```';
+    expect(JSON.parse(extractJsonBlock(wrapped))).toEqual({ note: 'a long sentence that got hard wrapped mid-value' });
+  });
 });
 
 describe('Property: round-trip through arbitrary prose wrapping', () => {

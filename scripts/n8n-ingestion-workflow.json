@@ -39,7 +39,7 @@
     },
     {
       "parameters": {
-        "functionCode": "// Extract the fenced ```json STRUCTURED DATA block ChatGPT emits directly in the\n// email (see the scheduled prompt), and JSON.parse it. No AI call anywhere in this\n// workflow — ChatGPT already produces schema-shaped JSON upstream.\n// Keep this logic in sync with assets/js/lib/extract-json.js (n8n Function nodes\n// cannot `import` repo files, so this is a byte-equivalent inline copy).\nconst { body, subject, arrivalTs } = items[0].json;\n\nfunction extractFirstBalancedObject(text) {\n  const start = text.indexOf('{');\n  if (start === -1) return null;\n  let depth = 0, inString = false, escaped = false;\n  for (let i = start; i < text.length; i++) {\n    const ch = text[i];\n    if (inString) {\n      if (escaped) escaped = false;\n      else if (ch === '\\\\') escaped = true;\n      else if (ch === '\"') inString = false;\n      continue;\n    }\n    if (ch === '\"') { inString = true; continue; }\n    if (ch === '{') depth++;\n    else if (ch === '}') { depth--; if (depth === 0) return text.slice(start, i + 1); }\n  }\n  return null;\n}\n\nfunction extractJsonBlock(rawText) {\n  if (typeof rawText !== 'string') return null;\n  const fenced = rawText.match(/```json\\s*([\\s\\S]*?)```/i);\n  if (fenced) return fenced[1].trim();\n  return extractFirstBalancedObject(rawText);\n}\n\nconst jsonText = extractJsonBlock(body);\nif (!jsonText) {\n  return [{ json: { valid: false, error: 'PARSE_FAIL', message: 'No JSON block found in email body', subject, arrivalTs } }];\n}\n\nlet parsed;\ntry {\n  parsed = JSON.parse(jsonText);\n} catch (e) {\n  return [{ json: { valid: false, error: 'PARSE_FAIL', message: e.message, subject, arrivalTs } }];\n}\n\nreturn [{ json: { parsed, subject, arrivalTs } }];"
+        "functionCode": "// Extract the fenced ```json STRUCTURED DATA block ChatGPT emits directly in the\n// email (see the scheduled prompt), and JSON.parse it. No AI call anywhere in this\n// workflow — ChatGPT already produces schema-shaped JSON upstream.\n// Keep this logic in sync with assets/js/lib/extract-json.js (n8n Function nodes\n// cannot `import` repo files, so this is a byte-equivalent inline copy).\nconst { body, subject, arrivalTs } = items[0].json;\n\nfunction extractFirstBalancedObject(text) {\n  const start = text.indexOf('{');\n  if (start === -1) return null;\n  let depth = 0, inString = false, escaped = false;\n  for (let i = start; i < text.length; i++) {\n    const ch = text[i];\n    if (inString) {\n      if (escaped) escaped = false;\n      else if (ch === '\\\\') escaped = true;\n      else if (ch === '\"') inString = false;\n      continue;\n    }\n    if (ch === '\"') { inString = true; continue; }\n    if (ch === '{') depth++;\n    else if (ch === '}') { depth--; if (depth === 0) return text.slice(start, i + 1); }\n  }\n  return null;\n}\n\n// Mail transfer agents / plain-text rendering commonly hard-wrap long lines,\n// which can inject a raw newline in the middle of a JSON string value — JSON.parse\n// rejects that as a bad control character. Collapse it to a space instead of failing.\nfunction sanitizeStringNewlines(text) {\n  let result = '';\n  let inString = false, escaped = false;\n  for (let i = 0; i < text.length; i++) {\n    const ch = text[i];\n    if (inString) {\n      if (escaped) { escaped = false; result += ch; continue; }\n      if (ch === '\\\\') { escaped = true; result += ch; continue; }\n      if (ch === '\"') { inString = false; result += ch; continue; }\n      result += (ch === '\\n' || ch === '\\r') ? ' ' : ch;\n      continue;\n    }\n    if (ch === '\"') inString = true;\n    result += ch;\n  }\n  return result;\n}\n\nfunction extractJsonBlock(rawText) {\n  if (typeof rawText !== 'string') return null;\n  const fenced = rawText.match(/```json\\s*([\\s\\S]*?)```/i);\n  const candidate = fenced ? fenced[1].trim() : extractFirstBalancedObject(rawText);\n  return candidate === null ? null : sanitizeStringNewlines(candidate);\n}\n\nconst jsonText = extractJsonBlock(body);\nif (!jsonText) {\n  return [{ json: { valid: false, error: 'PARSE_FAIL', message: 'No JSON block found in email body', subject, arrivalTs } }];\n}\n\nlet parsed;\ntry {\n  parsed = JSON.parse(jsonText);\n} catch (e) {\n  return [{ json: { valid: false, error: 'PARSE_FAIL', message: e.message, subject, arrivalTs } }];\n}\n\nreturn [{ json: { parsed, subject, arrivalTs } }];"
       },
       "id": "extract-json-block",
       "name": "Extract JSON Block",
@@ -228,7 +228,7 @@
       "typeVersion": 1.1,
       "position": [
         1300,
-        440
+        400
       ]
     },
     {
@@ -243,7 +243,27 @@
       "typeVersion": 1.1,
       "position": [
         1300,
-        560
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.error }}",
+              "value2": "PARSE_FAIL"
+            }
+          ]
+        }
+      },
+      "id": "branch-failure-type",
+      "name": "Failure Type?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        460
       ]
     }
   ],
@@ -303,7 +323,7 @@
         ],
         [
           {
-            "node": "Notify Schema Failure",
+            "node": "Failure Type?",
             "type": "main",
             "index": 0
           }
@@ -386,6 +406,24 @@
           }
         ]
       ]
+    },
+    "Failure Type?": {
+      "main": [
+        [
+          {
+            "node": "Notify Parse Failure",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Schema Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -398,5 +436,5 @@
   ],
   "triggerCount": 1,
   "updatedAt": "2026-07-03T00:00:00.000Z",
-  "versionId": "2"
+  "versionId": "3"
 }
