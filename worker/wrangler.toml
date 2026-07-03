@@ -6,16 +6,9 @@ compatibility_date = "2026-07-03"
 ALLOWED_EMAIL = "bmdeshmukh18@gmail.com"
 
 [[routes]]
-pattern = "briefanalytics.bmdeshmukh18.in/api/*"
+pattern = "briefanalytics.bmdeshmukh18.in/api/publish*"
 zone_name = "bmdeshmukh18.in"
 
-# Secrets, not stored here:
+# GITHUB_TOKEN is set as a secret, not stored here:
 #   npx wrangler secret put GITHUB_TOKEN
-#     Fine-grained PAT scoped to Contents: Read/Write on this one repo only.
-#   npx wrangler secret put OPENAI_API_KEY
-#     Used only by /api/parse, the fallback for pasted content with no JSON block.
-#
-# After deploying, update the Cloudflare Access application's path from
-# /api/publish* to /api/* (or add a second app for /api/parse*) so this new
-# route is gated the same way — otherwise /api/parse is reachable by anyone
-# and would spend your OpenAI credits on their behalf.
+# Use a fine-grained PAT scoped to Contents: Read/Write on this one repo only.

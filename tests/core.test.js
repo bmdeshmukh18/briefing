@@ -7,7 +7,7 @@ import {
   windowSeries, plottablePoints,
   classifyAccuracy, shouldSkipVerification, rollingAccuracy,
   buildSeo, isGated, accessDecision, adminNotesDecision,
-  buildHistoryRow,
+  buildHistoryRow, mergeBriefing,
 } from '../assets/js/lib/core.js';
 
 const genISODate = fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') })
@@ -308,6 +308,94 @@ describe('Property: History row derivation', () => {
       date: '2026-07-03', nifty_close: null, nifty_change_pct: null,
       fii_net_cr: null, dii_net_cr: null, advances: null, declines: null,
     });
+  });
+});
+
+// ── mergeBriefing: fill-only-nulls, never touches prediction_result ────
+describe('mergeBriefing', () => {
+  function makeBriefing(overrides = {}) {
+    const base = {
+      meta: { date: '2026-07-03', session_status: 'Trading', market_tone: null, sources: [] },
+      summary: {
+        nifty50: { close: 24000, change_pct: 0.5 },
+        sensex: { close: 78000, change_pct: 0.4 },
+        broader_market: { smallcap_pct: null, midcap_pct: null },
+        breadth: { nifty500_advances: null, nifty500_declines: null },
+        sectors: { leaders: [], laggards: [], count_advanced: null },
+        key_gainers: [], key_losers: [],
+        institutional_flows: { fii_net_cr: null, dii_net_cr: null },
+        macro: { brent_crude: null, india_10y_yield: null, usd_inr: null, gold: null, india_vix: null, us_10y_yield: null },
+        global_indices: [],
+      },
+      triggers: { domestic: [], global: [] },
+      deep_dive: { full_text: null, summary_takeaway: null },
+      outlook: { base_case: null, scenarios: [{ name: 'A', probability: 100, range_low: 1, range_high: 2 }], support_levels: [], resistance_levels: [], key_watch: [] },
+      prediction_result: { actual_close: null, actual_change_pct: null, matched_scenario: null, accuracy_tag: null, verified_at: null },
+      admin_notes: null,
+    };
+    return { ...base, ...overrides };
+  }
+
+  it('returns incoming unchanged when no existing briefing', () => {
+    const incoming = makeBriefing();
+    expect(mergeBriefing(null, incoming)).toBe(incoming);
+  });
+
+  it('returns existing unchanged when no incoming briefing', () => {
+    const existing = makeBriefing();
+    expect(mergeBriefing(existing, null)).toBe(existing);
+  });
+
+  it('fills a previously-null scalar field (e.g. FII/DII) from incoming', () => {
+    const existing = makeBriefing();
+    const incoming = makeBriefing({
+      summary: { ...existing.summary, institutional_flows: { fii_net_cr: -500, dii_net_cr: 800 } },
+    });
+    const merged = mergeBriefing(existing, incoming);
+    expect(merged.summary.institutional_flows).toEqual({ fii_net_cr: -500, dii_net_cr: 800 });
+  });
+
+  it('never overwrites an existing non-null scalar field with a different incoming value', () => {
+    const existing = makeBriefing();
+    const incoming = makeBriefing({
+      summary: { ...existing.summary, nifty50: { close: 99999, change_pct: 9.9 } },
+    });
+    const merged = mergeBriefing(existing, incoming);
+    expect(merged.summary.nifty50).toEqual({ close: 24000, change_pct: 0.5 });
+  });
+
+  it('fills a previously-empty array field from incoming', () => {
+    const existing = makeBriefing();
+    const incoming = makeBriefing({
+      summary: { ...existing.summary, key_gainers: [{ symbol: 'INFY', change_pct: 2 }] },
+    });
+    const merged = mergeBriefing(existing, incoming);
+    expect(merged.summary.key_gainers).toEqual([{ symbol: 'INFY', change_pct: 2 }]);
+  });
+
+  it('keeps an existing non-empty array field even if incoming has a different one', () => {
+    const existing = makeBriefing({
+      summary: { ...makeBriefing().summary, key_gainers: [{ symbol: 'TCS', change_pct: 1 }] },
+    });
+    const incoming = makeBriefing({
+      summary: { ...makeBriefing().summary, key_gainers: [{ symbol: 'INFY', change_pct: 2 }] },
+    });
+    const merged = mergeBriefing(existing, incoming);
+    expect(merged.summary.key_gainers).toEqual([{ symbol: 'TCS', change_pct: 1 }]);
+  });
+
+  it('always keeps existing prediction_result, regardless of what incoming contains', () => {
+    // Feature: nse-pulse, Property: prediction_result is owned exclusively by Prediction_Tracker
+    fc.assert(fc.property(
+      fc.oneof(fc.constant(null), fc.constantFrom('Correct', 'Partial', 'Wrong')),
+      fc.oneof(fc.constant(null), fc.constantFrom('Correct', 'Partial', 'Wrong')),
+      (existingTag, incomingTag) => {
+        const existing = makeBriefing({ prediction_result: { actual_close: 100, actual_change_pct: 1, matched_scenario: 'A', accuracy_tag: existingTag, verified_at: '2026-07-02T00:00:00Z' } });
+        const incoming = makeBriefing({ prediction_result: { actual_close: 200, actual_change_pct: 2, matched_scenario: 'B', accuracy_tag: incomingTag, verified_at: null } });
+        const merged = mergeBriefing(existing, incoming);
+        expect(merged.prediction_result).toEqual(existing.prediction_result);
+      }
+    ), { numRuns: 100 });
   });
 });
 

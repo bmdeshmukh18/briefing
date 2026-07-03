@@ -1,10 +1,8 @@
 // NSE Pulse — Publish Console
 // Fallback path for when the n8n ingestion pipeline is unavailable: paste the raw
-// ChatGPT/Gmail briefing. If it has a fenced ```json STRUCTURED DATA block, that's
-// extracted deterministically; if not (e.g. an older-format email), the Worker's
-// /api/parse route sends the raw text to an LLM to produce the same schema. Either
-// way the result is normalized/validated through the exact shared logic the main
-// site uses, then published via the Worker (which holds the GitHub token server-side).
+// ChatGPT/Gmail briefing (narrative + fenced ```json STRUCTURED DATA block), extract
+// and validate the JSON through the exact same shared logic the main site uses, then
+// publish via the Cloudflare Worker (which holds the GitHub token server-side).
 import { extractJsonBlock } from '../assets/js/lib/extract-json.js';
 import { validateBriefing, normalizeBriefing } from '../assets/js/lib/schema.js';
 import { upsertIndexDate, upsertHistoryRow, buildHistoryRow } from '../assets/js/lib/core.js';
@@ -17,9 +15,7 @@ DataAccess.config.dataBaseUrl = '/data';
 // edge in front of /ops-4f21/* and /api/publish* — see the deployment checklist.
 // This username field is a UI role router only; it grants no access by itself.
 const ADMIN_USERNAME = 'bmdeshmukh18';
-const API_BASE = 'https://briefanalytics.bmdeshmukh18.in/api';
-const PUBLISH_URL = `${API_BASE}/publish`;
-const PARSE_URL = `${API_BASE}/parse`;
+const WORKER_URL = 'https://briefanalytics.bmdeshmukh18.in/api/publish';
 
 // ── Theme (same convention as assets/js/app.js) ────────────────────
 const LIGHT_THEMES = ['daylight'];
@@ -98,20 +94,6 @@ function showResult(message, type) {
   resultEl.hidden = false;
 }
 
-// ── AI parse fallback — only used when no fenced JSON block is found ────
-async function aiParse(rawText) {
-  const resp = await fetch(PARSE_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text: rawText }),
-  });
-  const body = await resp.json().catch(() => ({}));
-  if (!resp.ok || !body.ok) {
-    throw new Error(body.message ?? resp.statusText);
-  }
-  return body.briefing;
-}
-
 // ── Parse flow ──────────────────────────────────────────────────────
 async function handleParse() {
   errorsEl.hidden = true;
@@ -122,29 +104,17 @@ async function handleParse() {
 
   const raw = rawInput.value;
   const jsonText = extractJsonBlock(raw);
+  if (!jsonText) {
+    showErrors(['No JSON block found in the pasted content. Expect a fenced ```json ... ``` STRUCTURED DATA block.']);
+    return;
+  }
 
   let parsed;
-  if (jsonText) {
-    try {
-      parsed = JSON.parse(jsonText);
-    } catch (err) {
-      showErrors([`Extracted content is not valid JSON: ${err.message}`]);
-      return;
-    }
-  } else {
-    // No fenced block found — fall back to AI extraction from free-form text.
-    parseBtn.disabled = true;
-    const originalLabel = parseBtn.textContent;
-    parseBtn.textContent = 'Parsing with AI…';
-    try {
-      parsed = await aiParse(raw);
-    } catch (err) {
-      showErrors([`No JSON block found, and AI parsing failed: ${err.message}`]);
-      return;
-    } finally {
-      parseBtn.disabled = false;
-      parseBtn.textContent = originalLabel;
-    }
+  try {
+    parsed = JSON.parse(jsonText);
+  } catch (err) {
+    showErrors([`Extracted content is not valid JSON: ${err.message}`]);
+    return;
   }
 
   const normalized = normalizeBriefing(parsed);
@@ -179,7 +149,7 @@ async function handlePublish() {
   resultEl.hidden = true;
 
   try {
-    const resp = await fetch(PUBLISH_URL, {
+    const resp = await fetch(WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(pendingPayload),
