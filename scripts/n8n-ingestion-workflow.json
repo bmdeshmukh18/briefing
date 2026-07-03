@@ -139,14 +139,13 @@
       "parameters": {
         "method": "PUT",
         "url": "=https://api.github.com/repos/bmdeshmukh18/briefing/contents/data/briefings/{{ $node['Prepare Commit Data'].json.date }}.json",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "=Bearer {{ $credentials.githubToken }}"
+              "value": "=Bearer {{ $env.GITHUB_TOKEN }}"
             },
             {
               "name": "Accept",
@@ -436,5 +435,5 @@
   ],
   "triggerCount": 1,
   "updatedAt": "2026-07-03T00:00:00.000Z",
-  "versionId": "4"
+  "versionId": "5"
 }
