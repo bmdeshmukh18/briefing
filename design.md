@@ -343,7 +343,8 @@ All data models use explicit `null` for missing values rather than omitting keys
   "meta": {
     "date": "YYYY-MM-DD",            // string, ISO-8601, equals filename date (R1.3); non-null for a committed file (R3.4)
     "session_status": "Trading",     // enum: "Trading" | "Holiday" (R1.3)
-    "market_tone": "Cautiously bullish" // string <=60 chars, or null (R1.3)
+    "market_tone": "Cautiously bullish", // string <=60 chars, or null (R1.3)
+    "sources": ["Reuters", "NSE"]     // v2, OPTIONAL string[], default [] (citation list)
   },
   "summary": {
     "nifty50":  { "close": 22500.0, "change_pct": 0.42 },     // numbers or null (R1.4, R1.5, R1.11)
@@ -358,14 +359,22 @@ All data models use explicit `null` for missing values rather than omitting keys
     "key_gainers": [ { "symbol": "INFY", "change_pct": 3.1 } ],  // list (may be empty -> R13.4)
     "key_losers":  [ { "symbol": "HDFC", "change_pct": -2.2 } ], // list (may be empty -> R13.4)
     "institutional_flows": { "fii_net_cr": -1200.5, "dii_net_cr": 980.0 }, // numbers or null
-    "macro": { "brent_crude": 82.3, "india_10y_yield": 7.05 }   // numbers or null
+    "macro": {
+      "brent_crude": 82.3, "india_10y_yield": 7.05,            // numbers or null
+      "usd_inr": 83.42, "gold": 71500.0,                        // v2, OPTIONAL numbers or null
+      "india_vix": 13.8, "us_10y_yield": 4.28                   // v2, OPTIONAL numbers or null
+    },
+    "global_indices": [                                         // v2, OPTIONAL, default []
+      { "name": "Dow Jones", "change_pct": -0.32 }               // { name: string, change_pct: number|null }
+    ]
   },
   "triggers": {
     "domestic": ["RBI policy hold"],  // list of strings (R1.6)
     "global":   ["US CPI print"]      // list of strings (R1.6)
   },
   "deep_dive": {
-    "full_text": "….long-form analysis…"   // string or null (R1.7)
+    "full_text": "….long-form analysis…",  // string or null (R1.7)
+    "summary_takeaway": "FII selling offset by strong domestic flows." // v2, OPTIONAL string|null, <=280 chars
   },
   "outlook": {
     "base_case": "Range-bound with positive bias",  // string or null
@@ -413,6 +422,12 @@ All data models use explicit `null` for missing values rather than omitting keys
 | `prediction_result.accuracy_tag` | string | yes | `Correct` \| `Partial` \| `Wrong` \| null | 1.10 |
 | `prediction_result.verified_at` | string | yes | ISO-8601 date-time | 1.10 |
 | `admin_notes` | string | optional | ≤5000 chars | 14.4 |
+| `meta.sources` | string[] | optional | default `[]` | v2 |
+| `summary.macro.usd_inr/gold/india_vix/us_10y_yield` | number | optional, yes | number or null | v2 |
+| `summary.global_indices` | object[] | optional | default `[]`, items `{name, change_pct}` | v2 |
+| `deep_dive.summary_takeaway` | string | optional, yes | ≤280 chars | v2 |
+
+Schema v2 fields (marked `v2` above) are additive and optional — a v1-only file (missing all of them) remains valid, and `normalizeBriefing` fills them with `null`/`[]`. No existing field name has been renamed or removed, per the "never change field names once live" rule.
 
 **Schema invariants** (must hold for every valid Briefing_File):
 - I1: `outlook.scenarios` has between 1 and 5 elements (R1.8).

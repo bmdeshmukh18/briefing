@@ -1,0 +1,267 @@
+{
+  "name": "NSE Pulse — Prediction Tracker",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 16 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Mirrors assets/js/lib/core.js's shouldSkipVerification. Keep the two in sync.\n// Update this holiday list to match the current year's NSE trading calendar.\nconst NSE_HOLIDAYS_2026 = ['2026-01-26', '2026-03-14', '2026-08-15', '2026-10-02', '2026-11-14', '2026-12-25'];\n\nfunction shouldSkipVerification(date, holidayList = []) {\n  const d = new Date(date + 'T00:00:00Z');\n  const dow = d.getUTCDay();\n  if (dow === 0 || dow === 6) return { skip: true, reason: 'weekend' };\n  if (holidayList.includes(date)) return { skip: true, reason: 'holiday' };\n  return { skip: false, reason: null };\n}\n\nconst today = new Date().toISOString().slice(0, 10);\nconst gate = shouldSkipVerification(today, NSE_HOLIDAYS_2026);\nreturn [{ json: { skip: gate.skip, reason: gate.reason, today } }];"
+      },
+      "id": "trading-day-gate",
+      "name": "Trading Day Gate",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.skip }}",
+              "value2": false
+            }
+          ]
+        }
+      },
+      "id": "trading-day-branch",
+      "name": "Trading Day?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Fetch data/index.json and pick the latest date strictly before today.\nconst { today } = items[0].json;\n\nconst indexRes = await $helpers.request({\n  method: 'GET',\n  url: 'https://api.github.com/repos/bmdeshmukh18/briefing/contents/data/index.json',\n  headers: {\n    'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,\n    'Accept': 'application/vnd.github.v3+json'\n  },\n  json: true\n});\nconst dates = JSON.parse(Buffer.from(indexRes.content, 'base64').toString()).dates || [];\nconst priorDate = [...dates].filter(d => d < today).sort().at(-1);\n\nif (!priorDate) {\n  throw new Error(`No prior trading day found in index.json before ${today}`);\n}\n\nreturn [{ json: { priorDate } }];"
+      },
+      "id": "find-prior-day",
+      "name": "Find Prior Trading Day",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        900,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Fetch and decode the prior day's Briefing_File.\nconst { priorDate } = items[0].json;\nconst path = `data/briefings/${priorDate}.json`;\n\nconst res = await $helpers.request({\n  method: 'GET',\n  url: `https://api.github.com/repos/bmdeshmukh18/briefing/contents/${path}`,\n  headers: {\n    'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,\n    'Accept': 'application/vnd.github.v3+json'\n  },\n  json: true\n});\nconst briefing = JSON.parse(Buffer.from(res.content, 'base64').toString());\n\nreturn [{ json: { briefing, priorDate, path } }];"
+      },
+      "id": "fetch-prior-briefing",
+      "name": "Fetch Prior Briefing",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Yahoo Finance primary (30s timeout), Upstox backup (30s timeout) on failure.\n// Both failing leaves prediction_result untouched (R7.9) — no partial write.\nconst { briefing, priorDate, path } = items[0].json;\n\nasync function fetchYahoo() {\n  const res = await $helpers.request({\n    method: 'GET',\n    url: 'https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?interval=1d&range=2d',\n    json: true,\n    timeout: 30000\n  });\n  const close = res?.chart?.result?.[0]?.meta?.regularMarketPrice;\n  if (typeof close !== 'number') throw new Error('Yahoo Finance: no close price in response');\n  return close;\n}\n\nasync function fetchUpstox() {\n  // Requires an UPSTOX_TOKEN credential/env var provisioned by the user.\n  const res = await $helpers.request({\n    method: 'GET',\n    url: 'https://api.upstox.com/v2/market-quote/ltp?symbol=NSE_INDEX%7CNifty%2050',\n    headers: { 'Authorization': `Bearer ${process.env.UPSTOX_TOKEN}` },\n    json: true,\n    timeout: 30000\n  });\n  const key = Object.keys(res?.data || {})[0];\n  const close = res?.data?.[key]?.last_price;\n  if (typeof close !== 'number') throw new Error('Upstox: no close price in response');\n  return close;\n}\n\nlet actualClose;\ntry {\n  actualClose = await fetchYahoo();\n} catch (yahooErr) {\n  try {\n    actualClose = await fetchUpstox();\n  } catch (upstoxErr) {\n    return [{ json: { bothFailed: true, priorDate, message: `Yahoo: ${yahooErr.message}; Upstox: ${upstoxErr.message}` } }];\n  }\n}\n\nreturn [{ json: { bothFailed: false, actualClose, briefing, priorDate, path } }];"
+      },
+      "id": "fetch-nifty-close",
+      "name": "Fetch Actual Nifty Close",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.bothFailed }}",
+              "value2": false
+            }
+          ]
+        }
+      },
+      "id": "close-fetched-branch",
+      "name": "Close Fetched?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1560,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Mirrors assets/js/lib/core.js's classifyAccuracy. Keep the two in sync.\nfunction classifyAccuracy(actualClose, scenarios) {\n  if (!Array.isArray(scenarios) || scenarios.length === 0) {\n    return { accuracy_tag: 'Wrong', matched_scenario: null };\n  }\n  const inRange = s => actualClose >= s.range_low && actualClose <= s.range_high;\n  const top = scenarios.reduce((best, s) => s.probability > best.probability ? s : best, scenarios[0]);\n  if (inRange(top)) return { accuracy_tag: 'Correct', matched_scenario: top.name };\n  const matching = scenarios.filter(inRange);\n  if (matching.length > 0) {\n    const best = matching.reduce((b, s) => s.probability > b.probability ? s : b, matching[0]);\n    return { accuracy_tag: 'Partial', matched_scenario: best.name };\n  }\n  return { accuracy_tag: 'Wrong', matched_scenario: null };\n}\n\nconst { actualClose, briefing, priorDate, path } = items[0].json;\nconst scenarios = briefing.outlook?.scenarios || [];\nconst { accuracy_tag, matched_scenario } = classifyAccuracy(actualClose, scenarios);\n\n// Change vs. the prior day's own close (consistent with how nifty50.change_pct\n// is computed elsewhere) — confirm this matches intent before relying on it.\nconst priorClose = briefing.summary?.nifty50?.close ?? null;\nconst actual_change_pct = priorClose ? Math.round(((actualClose - priorClose) / priorClose) * 10000) / 100 : null;\n\nconst prediction_result = {\n  actual_close: actualClose,\n  actual_change_pct,\n  matched_scenario,\n  accuracy_tag,\n  verified_at: new Date().toISOString(),\n};\n\nreturn [{ json: { briefing, priorDate, path, prediction_result } }];"
+      },
+      "id": "classify-accuracy",
+      "name": "Classify Accuracy",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1780,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Re-fetch current sha (may have changed since the initial read) and merge\n// prediction_result into the untouched rest of the file.\nconst { briefing, priorDate, path, prediction_result } = items[0].json;\n\nconst current = await $helpers.request({\n  method: 'GET',\n  url: `https://api.github.com/repos/bmdeshmukh18/briefing/contents/${path}`,\n  headers: {\n    'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,\n    'Accept': 'application/vnd.github.v3+json'\n  },\n  json: true\n});\nconst currentBriefing = JSON.parse(Buffer.from(current.content, 'base64').toString());\nconst updated = { ...currentBriefing, prediction_result };\nconst newContent = Buffer.from(JSON.stringify(updated, null, 2)).toString('base64');\n\nawait $helpers.request({\n  method: 'PUT',\n  url: `https://api.github.com/repos/bmdeshmukh18/briefing/contents/${path}`,\n  headers: {\n    'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,\n    'Content-Type': 'application/json',\n    'Accept': 'application/vnd.github.v3+json'\n  },\n  body: JSON.stringify({\n    message: `Verify prediction for ${priorDate}`,\n    content: newContent,\n    branch: 'main',\n    sha: current.sha\n  })\n});\n\nreturn [{ json: { success: true, priorDate, prediction_result } }];"
+      },
+      "id": "write-prediction-result",
+      "name": "Write Prediction Result",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $env.ADMIN_EMAIL }}",
+        "subject": "=NSE Pulse ✗ Verification Failed: {{ $json.priorDate }}",
+        "message": "=Both Yahoo Finance and Upstox failed to return an actual Nifty close for {{ $json.priorDate }}.\n\nError: {{ $json.message }}\n\nprediction_result for this date was left unchanged (all fields remain null)."
+      },
+      "id": "notify-verification-error",
+      "name": "Notify Verification Error",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        320
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Trading Day Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trading Day Gate": {
+      "main": [
+        [
+          {
+            "node": "Trading Day?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trading Day?": {
+      "main": [
+        [
+          {
+            "node": "Find Prior Trading Day",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Find Prior Trading Day": {
+      "main": [
+        [
+          {
+            "node": "Fetch Prior Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Prior Briefing": {
+      "main": [
+        [
+          {
+            "node": "Fetch Actual Nifty Close",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Actual Nifty Close": {
+      "main": [
+        [
+          {
+            "node": "Close Fetched?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Close Fetched?": {
+      "main": [
+        [
+          {
+            "node": "Classify Accuracy",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Verification Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Accuracy": {
+      "main": [
+        [
+          {
+            "node": "Write Prediction Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "staticData": null,
+  "tags": [
+    "nse-pulse"
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2026-07-03T00:00:00.000Z",
+  "versionId": "1"
+}

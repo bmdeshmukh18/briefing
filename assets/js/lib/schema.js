@@ -18,6 +18,10 @@ function validateScenario(s) {
   return true;
 }
 
+function validateNamedChange(x) {
+  return !!x && typeof x === 'object' && isString(x.name) && isNullOrNumber(x.change_pct);
+}
+
 export function validateBriefing(obj) {
   if (!obj || typeof obj !== 'object') return false;
   const { meta, summary, triggers, deep_dive, outlook, prediction_result } = obj;
@@ -28,6 +32,7 @@ export function validateBriefing(obj) {
   if (!SESSION_STATUSES.includes(meta.session_status)) return false;
   if (!isNullOrString(meta.market_tone)) return false;
   if (isString(meta.market_tone) && meta.market_tone.length > 60) return false;
+  if (meta.sources !== undefined && !isStringArray(meta.sources)) return false;
 
   // summary
   if (!summary || typeof summary !== 'object') return false;
@@ -39,12 +44,23 @@ export function validateBriefing(obj) {
   if (!Array.isArray(summary.key_gainers) || !Array.isArray(summary.key_losers)) return false;
   if (!summary.institutional_flows || !isNullOrNumber(summary.institutional_flows.fii_net_cr) || !isNullOrNumber(summary.institutional_flows.dii_net_cr)) return false;
   if (!summary.macro || !isNullOrNumber(summary.macro.brent_crude) || !isNullOrNumber(summary.macro.india_10y_yield)) return false;
+  if (summary.macro.usd_inr !== undefined && !isNullOrNumber(summary.macro.usd_inr)) return false;
+  if (summary.macro.gold !== undefined && !isNullOrNumber(summary.macro.gold)) return false;
+  if (summary.macro.india_vix !== undefined && !isNullOrNumber(summary.macro.india_vix)) return false;
+  if (summary.macro.us_10y_yield !== undefined && !isNullOrNumber(summary.macro.us_10y_yield)) return false;
+  if (summary.global_indices !== undefined) {
+    if (!Array.isArray(summary.global_indices) || !summary.global_indices.every(validateNamedChange)) return false;
+  }
 
   // triggers
   if (!triggers || !isStringArray(triggers.domestic) || !isStringArray(triggers.global)) return false;
 
   // deep_dive
   if (!deep_dive || !('full_text' in deep_dive) || !isNullOrString(deep_dive.full_text)) return false;
+  if (deep_dive.summary_takeaway !== undefined) {
+    if (!isNullOrString(deep_dive.summary_takeaway)) return false;
+    if (isString(deep_dive.summary_takeaway) && deep_dive.summary_takeaway.length > 280) return false;
+  }
 
   // outlook
   if (!outlook || typeof outlook !== 'object') return false;
@@ -86,6 +102,7 @@ export function normalizeBriefing(obj) {
       date: n(meta.date),
       session_status: n(meta.session_status),
       market_tone: n(meta.market_tone),
+      sources: nArr(meta.sources),
     },
     summary: {
       nifty50: { close: n(nifty50.close), change_pct: n(nifty50.change_pct) },
@@ -96,13 +113,21 @@ export function normalizeBriefing(obj) {
       key_gainers: nArr(summary.key_gainers),
       key_losers: nArr(summary.key_losers),
       institutional_flows: { fii_net_cr: n(flows.fii_net_cr), dii_net_cr: n(flows.dii_net_cr) },
-      macro: { brent_crude: n(macro.brent_crude), india_10y_yield: n(macro.india_10y_yield) },
+      macro: {
+        brent_crude: n(macro.brent_crude),
+        india_10y_yield: n(macro.india_10y_yield),
+        usd_inr: n(macro.usd_inr),
+        gold: n(macro.gold),
+        india_vix: n(macro.india_vix),
+        us_10y_yield: n(macro.us_10y_yield),
+      },
+      global_indices: nArr(summary.global_indices).map(gi => ({ name: n(gi?.name), change_pct: n(gi?.change_pct) })),
     },
     triggers: {
       domestic: nArr(triggers.domestic),
       global: nArr(triggers.global),
     },
-    deep_dive: { full_text: n(deep_dive.full_text) },
+    deep_dive: { full_text: n(deep_dive.full_text), summary_takeaway: n(deep_dive.summary_takeaway) },
     outlook: {
       base_case: n(outlook.base_case),
       scenarios: nArr(outlook.scenarios),

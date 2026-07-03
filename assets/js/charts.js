@@ -13,7 +13,7 @@ const CHART_COLORS = {
 
 let charts = {};
 
-export async function initCharts() {
+export async function initCharts({ compact = false } = {}) {
   const root = document.getElementById('charts-root');
   if (!root) return;
 
@@ -29,6 +29,12 @@ export async function initCharts() {
 
   if (series.length === 0) {
     root.innerHTML = '<p class="empty-msg">No historical data available yet.</p>';
+    return;
+  }
+
+  if (compact) {
+    root.innerHTML = '<div class="chart-canvas-wrap chart-canvas-compact"><canvas id="chart-nifty-compact" aria-label="Nifty 50 trend chart"></canvas></div>';
+    renderNiftyChart('chart-nifty-compact', series, 'nifty');
     return;
   }
 
@@ -130,12 +136,10 @@ function baseOptions(title) {
   };
 }
 
-function renderAllCharts(series) {
+function renderNiftyChart(canvasId, series, key) {
   const labels = series.map(r => r.date.slice(5)); // MM-DD
-
-  // Nifty Trend
   const niftyPts = plottablePoints(series, 'nifty_close');
-  charts.nifty = new Chart(document.getElementById('chart-nifty'), {
+  charts[key] = new Chart(document.getElementById(canvasId), {
     type: 'line',
     data: {
       labels,
@@ -152,6 +156,13 @@ function renderAllCharts(series) {
     },
     options: baseOptions('Nifty 50 Trend'),
   });
+}
+
+function renderAllCharts(series) {
+  const labels = series.map(r => r.date.slice(5)); // MM-DD
+
+  // Nifty Trend
+  renderNiftyChart('chart-nifty', series, 'nifty');
 
   // FII/DII Flows
   const fiiPts = plottablePoints(series, 'fii_net_cr');

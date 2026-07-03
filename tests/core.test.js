@@ -7,6 +7,7 @@ import {
   windowSeries, plottablePoints,
   classifyAccuracy, shouldSkipVerification, rollingAccuracy,
   buildSeo, isGated, accessDecision, adminNotesDecision,
+  buildHistoryRow,
 } from '../assets/js/lib/core.js';
 
 const genISODate = fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') })
@@ -273,6 +274,40 @@ describe('Property 17: Rolling accuracy computation and display state', () => {
         expect(result.value).toBeLessThanOrEqual(100);
       }
     }), { numRuns: 100 });
+  });
+});
+
+// ── Property: History row derivation ──────────────────────────────
+describe('Property: History row derivation', () => {
+  const genBriefingForRow = fc.record({
+    meta: fc.record({ date: fc.oneof(genISODate, fc.constant(null)) }),
+    summary: fc.record({
+      nifty50: fc.record({ close: fc.oneof(fc.constant(null), fc.float({ min: 10000, max: 30000, noNaN: true })), change_pct: fc.oneof(fc.constant(null), fc.float({ min: -10, max: 10, noNaN: true })) }),
+      institutional_flows: fc.record({ fii_net_cr: fc.oneof(fc.constant(null), fc.float({ min: -5000, max: 5000, noNaN: true })), dii_net_cr: fc.oneof(fc.constant(null), fc.float({ min: -5000, max: 5000, noNaN: true })) }),
+      breadth: fc.record({ nifty500_advances: fc.oneof(fc.constant(null), fc.integer({ min: 0, max: 500 })), nifty500_declines: fc.oneof(fc.constant(null), fc.integer({ min: 0, max: 500 })) }),
+    }),
+  });
+
+  it('maps summary.* fields to the flat history row shape, defaulting absent values to null', () => {
+    // Feature: nse-pulse, Property: History row derivation
+    fc.assert(fc.property(genBriefingForRow, (briefing) => {
+      const row = buildHistoryRow(briefing);
+      expect(row.date).toBe(briefing.meta.date ?? null);
+      expect(row.nifty_close).toBe(briefing.summary.nifty50.close ?? null);
+      expect(row.nifty_change_pct).toBe(briefing.summary.nifty50.change_pct ?? null);
+      expect(row.fii_net_cr).toBe(briefing.summary.institutional_flows.fii_net_cr ?? null);
+      expect(row.dii_net_cr).toBe(briefing.summary.institutional_flows.dii_net_cr ?? null);
+      expect(row.advances).toBe(briefing.summary.breadth.nifty500_advances ?? null);
+      expect(row.declines).toBe(briefing.summary.breadth.nifty500_declines ?? null);
+    }), { numRuns: 100 });
+  });
+
+  it('handles a briefing with entirely missing summary gracefully', () => {
+    const row = buildHistoryRow({ meta: { date: '2026-07-03' } });
+    expect(row).toEqual({
+      date: '2026-07-03', nifty_close: null, nifty_change_pct: null,
+      fii_net_cr: null, dii_net_cr: null, advances: null, declines: null,
+    });
   });
 });
 

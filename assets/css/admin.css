@@ -1,0 +1,43 @@
+/* NSE Pulse — Console (admin publish page) — additive to style.css, loaded only here */
+
+.btn {
+  font-family: var(--sans); font-size: 0.85rem; font-weight: 600;
+  padding: 0.6rem 1.1rem; border-radius: var(--radius-sm); border: 1px solid transparent;
+  cursor: pointer; transition: opacity 0.15s, border-color 0.15s;
+}
+.btn-primary { background: var(--accent); color: var(--bg); }
+.btn-primary:hover { opacity: 0.88; }
+.btn-secondary { background: var(--surface2); color: var(--text-primary); border-color: var(--border); }
+.btn-secondary:hover { border-color: var(--border2); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.form-field { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+.form-field label {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted);
+}
+.form-input, .form-textarea {
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text-primary);
+  font-family: var(--mono); font-size: 0.85rem; padding: 0.6rem 0.75rem; border-radius: var(--radius-sm);
+}
+.form-input:focus, .form-textarea:focus { border-color: var(--accent); outline: none; }
+.form-textarea { min-height: 320px; resize: vertical; line-height: 1.5; }
+
+.validation-errors { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.75rem; }
+.validation-errors li {
+  font-size: 0.8rem; color: var(--negative); background: rgba(255,83,112,0.08);
+  border-left: 2px solid var(--negative); padding: 0.4rem 0.6rem; border-radius: var(--radius-sm);
+}
+
+.json-preview {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 1rem; font-family: var(--mono); font-size: 0.78rem; max-height: 400px;
+  overflow: auto; white-space: pre-wrap;
+}
+
+.publish-result { margin-top: 0.75rem; font-size: 0.85rem; }
+.publish-result.success { color: var(--positive); }
+.publish-result.error { color: var(--negative); }
+
+.role-placeholder { text-align: center; padding: 3rem 1rem; color: var(--text-secondary); }
+
+.console-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.75rem; }

@@ -20,6 +20,20 @@ export function upsertHistoryRow(history, row) {
   return { series: updated };
 }
 
+// ── History row derivation (shared by admin console and n8n) ──────
+export function buildHistoryRow(briefing) {
+  const s = briefing?.summary ?? {};
+  return {
+    date: briefing?.meta?.date ?? null,
+    nifty_close: s.nifty50?.close ?? null,
+    nifty_change_pct: s.nifty50?.change_pct ?? null,
+    fii_net_cr: s.institutional_flows?.fii_net_cr ?? null,
+    dii_net_cr: s.institutional_flows?.dii_net_cr ?? null,
+    advances: s.breadth?.nifty500_advances ?? null,
+    declines: s.breadth?.nifty500_declines ?? null,
+  };
+}
+
 // ── Date access helpers ───────────────────────────────────────────
 export function getLatestDate(index) {
   if (!index?.dates?.length) return null;

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="terminal">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>NSE Pulse — Console</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────────── -->
+  <header class="site-header" role="banner">
+    <div class="site-logo">
+      <svg class="logo-pulse" viewBox="0 0 28 16" aria-hidden="true" width="28" height="16">
+        <path d="M0 10 L5 10 L8 3 L11 14 L14 1 L17 12 L20 10 L28 10" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      NSE Pulse — Console
+    </div>
+    <div class="header-controls">
+      <div class="theme-switcher" role="group" aria-label="Select theme">
+        <button class="theme-swatch active" data-theme="terminal" title="Terminal (dark cobalt)" aria-label="Terminal theme"></button>
+        <button class="theme-swatch" data-theme="daylight" title="Daylight (light)" aria-label="Daylight theme"></button>
+        <button class="theme-swatch" data-theme="dusk" title="Dusk (warm dark)" aria-label="Dusk theme"></button>
+        <button class="theme-swatch" data-theme="forest" title="Forest (dark green)" aria-label="Forest theme"></button>
+        <button id="toggle-dark-btn" class="toggle-dark-btn" title="Toggle light/dark" aria-label="Toggle light/dark mode">☀</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" role="main">
+    <div class="main-content" style="max-width:760px">
+
+      <!-- Access to this page is gated by Cloudflare Access at the edge (see deployment
+           checklist). The username field below is a view router, not a login. -->
+      <div class="section-card" id="login-card">
+        <div class="section-header"><span class="section-title">Console Access</span></div>
+        <div class="section-body">
+          <p class="text-secondary text-sm" style="margin-bottom:1rem">Enter your username to continue.</p>
+          <div class="form-field">
+            <label for="username-input">Username</label>
+            <input type="text" id="username-input" class="form-input" autocomplete="username" placeholder="username">
+          </div>
+          <button id="continue-btn" class="btn btn-primary">Continue</button>
+        </div>
+      </div>
+
+      <div class="section-card" id="publish-card" hidden style="margin-top:1.25rem">
+        <div class="section-header"><span class="section-title">Publish Briefing</span></div>
+        <div class="section-body">
+          <p class="text-secondary text-sm" style="margin-bottom:1rem">
+            Paste the full raw ChatGPT/Gmail briefing (narrative + the fenced <code>```json</code> STRUCTURED DATA block).
+          </p>
+          <div class="form-field">
+            <label for="raw-input">Raw briefing content</label>
+            <textarea id="raw-input" class="form-textarea" placeholder="Paste the full email content here…"></textarea>
+          </div>
+          <div class="console-actions">
+            <button id="parse-btn" class="btn btn-primary">Parse</button>
+            <button id="publish-btn" class="btn btn-primary" disabled>Publish</button>
+            <button id="clear-btn" class="btn btn-secondary">Clear</button>
+          </div>
+          <ul id="validation-errors" class="validation-errors" hidden></ul>
+          <pre id="json-preview" class="json-preview" hidden></pre>
+          <div id="publish-result" class="publish-result" hidden></div>
+        </div>
+      </div>
+
+      <div class="section-card" id="placeholder-card" hidden style="margin-top:1.25rem">
+        <div class="section-body">
+          <div class="role-placeholder">Paid features coming soon.</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script type="module" src="console.js"></script>
+</body>
+</html>

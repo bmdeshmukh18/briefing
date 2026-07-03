@@ -36,6 +36,28 @@ function esc(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function truncate(text, maxLen) {
+  if (!text) return '';
+  if (text.length <= maxLen) return text;
+  const cut = text.slice(0, maxLen);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut) + '…';
+}
+
+// ── Views / routing ─────────────────────────────────────────────────
+// `view` is a second URL param alongside `date` (?date=X&view=Y). Absent or
+// unrecognized falls back to the dashboard — this keeps existing `?date=X`
+// links/bookmarks pointing at the dashboard unchanged.
+const VIEWS = ['dashboard', 'snapshot', 'movers', 'macro', 'outlook', 'deepdive', 'charts', 'tracker'];
+const VIEW_TITLES = {
+  snapshot: 'Market Snapshot', movers: 'Movers', macro: 'Macro & Triggers',
+  outlook: 'Outlook', deepdive: 'Deep Dive', charts: 'Historical Charts', tracker: 'Prediction Accuracy',
+};
+
+function viewLink(view, date) {
+  return `?date=${date}${view === 'dashboard' ? '' : `&view=${view}`}`;
+}
+
 // ── Theme management ──────────────────────────────────────────────
 const THEMES = ['terminal', 'daylight', 'dusk', 'forest'];
 const LIGHT_THEMES = ['daylight'];
@@ -85,7 +107,7 @@ function showError(msg) {
 }
 
 // ── Date navigator ────────────────────────────────────────────────
-function populateNavigator(index, selectedDate) {
+function populateNavigator(index, selectedDate, view) {
   const sel = document.getElementById('date-nav');
   if (!sel) return;
   sel.innerHTML = '';
@@ -97,7 +119,7 @@ function populateNavigator(index, selectedDate) {
     sel.appendChild(opt);
   });
   sel.addEventListener('change', () => {
-    window.location.href = `?date=${sel.value}`;
+    window.location.href = viewLink(view, sel.value);
   });
 }
 
@@ -209,8 +231,31 @@ function renderMovers(summary) {
 
 function renderMacro(summary, triggers, isMobile) {
   const macro = summary.macro ?? {};
+  const globalIndices = summary.global_indices ?? [];
   const domList = triggers.domestic ?? [];
   const globList = triggers.global ?? [];
+
+  const macroRows = [
+    ['Brent Crude ($)', macro.brent_crude, v => `$${Number(v).toFixed(2)}`],
+    ['India 10Y Yield (%)', macro.india_10y_yield, v => `${Number(v).toFixed(2)}%`],
+    ['USD/INR', macro.usd_inr, v => Number(v).toFixed(2)],
+    ['Gold (₹/10g)', macro.gold, v => Number(v).toLocaleString('en-IN')],
+    ['India VIX', macro.india_vix, v => Number(v).toFixed(2)],
+    ['US 10Y Yield (%)', macro.us_10y_yield, v => `${Number(v).toFixed(2)}%`],
+  ];
+  const macroTableHTML = `<table class="data-table"><tbody>
+      ${macroRows.map(([label, val, format]) => `<tr><td>${esc(label)}</td><td class="mono">${val !== null && val !== undefined ? format(val) : NULL_DISPLAY}</td></tr>`).join('')}
+    </tbody></table>`;
+
+  const globalIndicesHTML = globalIndices.length
+    ? `<div class="levels-row" style="margin:1rem 0">${globalIndices.map(gi => {
+        const chg = gi.change_pct;
+        const cls = chg === null || chg === undefined ? 'tag-neutral' : chg >= 0 ? 'tag-positive' : 'tag-negative';
+        const sign = chg !== null && chg !== undefined && chg >= 0 ? '+' : '';
+        const val = chg !== null && chg !== undefined ? `${sign}${Number(chg).toFixed(2)}%` : NULL_DISPLAY;
+        return `<span class="tag ${cls}">${esc(gi.name)} ${val}</span>`;
+      }).join('')}</div>`
+    : '';
 
   const domesticHTML = domList.length
     ? `<ul class="trigger-list">${domList.map(t => `<li>${esc(t)}</li>`).join('')}</ul>`
@@ -220,16 +265,8 @@ function renderMacro(summary, triggers, isMobile) {
     : `<p class="empty-msg">No entries available</p>`;
 
   const body = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-      <div class="metric-row" style="flex-direction:column;align-items:flex-start;gap:.2rem">
-        <span class="metric-label">Brent Crude</span>
-        <span class="metric-value">${macro.brent_crude !== null && macro.brent_crude !== undefined ? `$${Number(macro.brent_crude).toFixed(2)}` : NULL_DISPLAY}</span>
-      </div>
-      <div class="metric-row" style="flex-direction:column;align-items:flex-start;gap:.2rem">
-        <span class="metric-label">India 10Y Yield</span>
-        <span class="metric-value mono">${macro.india_10y_yield !== null && macro.india_10y_yield !== undefined ? `${Number(macro.india_10y_yield).toFixed(2)}%` : NULL_DISPLAY}</span>
-      </div>
-    </div>
+    <div style="margin-bottom:1rem">${macroTableHTML}</div>
+    ${globalIndicesHTML}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
       <div><h4 style="font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">Domestic</h4>${domesticHTML}</div>
       <div><h4 style="font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">Global</h4>${globalHTML}</div>
@@ -237,11 +274,22 @@ function renderMacro(summary, triggers, isMobile) {
   return renderSection('Macro & Triggers', body, 'section-macro', true, !isMobile);
 }
 
-function renderDeepDive(deep_dive, isMobile) {
+function renderDeepDive(deep_dive, meta, isMobile) {
   const text = deep_dive?.full_text;
-  const body = text
+  const takeaway = deep_dive?.summary_takeaway;
+  const sources = meta?.sources ?? [];
+
+  const takeawayHTML = takeaway
+    ? `<p style="font-weight:600;color:var(--accent);margin-bottom:.75rem">${esc(takeaway)}</p>`
+    : '';
+  const textHTML = text
     ? `<div style="font-size:.88rem;line-height:1.75;color:var(--text-primary)">${esc(text).replace(/\n/g, '<br>')}</div>`
     : `<p class="empty-msg">No deep dive available.</p>`;
+  const sourcesHTML = sources.length
+    ? `<div style="margin-top:1rem;padding-top:.75rem;border-top:1px solid var(--border);font-size:.75rem;color:var(--text-muted)">Sources: ${sources.map(esc).join(', ')}</div>`
+    : '';
+
+  const body = `${takeawayHTML}${textHTML}${sourcesHTML}`;
   return renderSection('Deep Dive', body, 'section-deepdive', true, !isMobile);
 }
 
@@ -300,18 +348,166 @@ function renderOutlook(outlook, isMobile) {
   return renderSection('Outlook', body, 'section-outlook', true, !isMobile);
 }
 
-function renderPredictionResult(pr) {
+function renderPredictionResult(pr, date) {
   if (!pr) return '';
   const tag = pr.accuracy_tag;
   if (!tag) return '';
   const tagClass = tag === 'Correct' ? 'tag-positive' : tag === 'Wrong' ? 'tag-negative' : 'tag-neutral';
   const body = `
-    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.75rem">
       <span class="tag ${tagClass}">${esc(tag)}</span>
       <span class="text-secondary text-sm">Actual close: <span class="mono">${fmtNum(pr.actual_close)}</span></span>
       ${pr.matched_scenario ? `<span class="text-secondary text-sm">Matched: <em>${esc(pr.matched_scenario)}</em></span>` : ''}
-    </div>`;
+    </div>
+    <a class="teaser-link" href="${viewLink('tracker', date)}">View accuracy history →</a>`;
   return renderSection('Yesterday\'s Prediction Result', body, 'section-prediction');
+}
+
+// ── Dashboard teaser cards ──────────────────────────────────────────
+function teaserCard(title, bodyHTML, view, date, linkLabel) {
+  return `
+    <div class="section-card teaser-card">
+      <div class="section-header"><span class="section-title">${esc(title)}</span></div>
+      <div class="section-body">
+        ${bodyHTML}
+        <a class="teaser-link" href="${viewLink(view, date)}">${esc(linkLabel)} →</a>
+      </div>
+    </div>`;
+}
+
+function renderSnapshotTeaser(summary, meta, date) {
+  const breadth = summary.breadth ?? {};
+  const adv = breadth.nifty500_advances;
+  const dec = breadth.nifty500_declines;
+  const total = (adv ?? 0) + (dec ?? 0);
+  const advPct = total > 0 ? ((adv / total) * 100).toFixed(0) : 50;
+
+  const body = `
+    ${meta.market_tone ? `<div class="tone-badge">${esc(meta.market_tone)}</div>` : ''}
+    <div class="breadth-visual">
+      <div class="breadth-track">
+        <div class="breadth-adv" style="width:${advPct}%"></div>
+        <div class="breadth-dec"></div>
+      </div>
+      <div class="breadth-labels">
+        <span class="positive">${adv !== null && adv !== undefined ? `▲ ${adv} Advances` : NULL_DISPLAY}</span>
+        <span class="negative">${dec !== null && dec !== undefined ? `▼ ${dec} Declines` : NULL_DISPLAY}</span>
+      </div>
+    </div>`;
+  return teaserCard('Market Snapshot', body, 'snapshot', date, 'View full snapshot');
+}
+
+function renderMoversTeaser(summary, date) {
+  const gainers = (summary.key_gainers ?? []).slice(0, 2);
+  const losers = (summary.key_losers ?? []).slice(0, 2);
+  const rowsHTML = list => list.length
+    ? list.map(x => `<div class="metric-row"><span class="metric-label">${esc(x.symbol)}</span>${fmtChange(x.change_pct)}</div>`).join('')
+    : `<p class="empty-msg">No entries available</p>`;
+
+  const body = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div><h4 style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Top Gainers</h4>${rowsHTML(gainers)}</div>
+      <div><h4 style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Top Losers</h4>${rowsHTML(losers)}</div>
+    </div>`;
+  return teaserCard('Movers', body, 'movers', date, 'View all movers');
+}
+
+function renderMacroTeaser(summary, date) {
+  const macro = summary.macro ?? {};
+  const chips = [
+    ['Brent', macro.brent_crude, v => `$${Number(v).toFixed(2)}`],
+    ['India VIX', macro.india_vix, v => Number(v).toFixed(2)],
+    ['USD/INR', macro.usd_inr, v => Number(v).toFixed(2)],
+  ];
+  const chipsHTML = chips.map(([label, val, format]) =>
+    `<span class="tag tag-neutral">${esc(label)}: ${val !== null && val !== undefined ? format(val) : NULL_DISPLAY}</span>`
+  ).join('');
+
+  const body = `<div class="levels-row">${chipsHTML}</div>`;
+  return teaserCard('Macro & Triggers', body, 'macro', date, 'View macro & triggers');
+}
+
+function renderOutlookTeaser(outlook, date) {
+  const baseCase = outlook?.base_case;
+  const scenarios = outlook?.scenarios ?? [];
+  const top = scenarios.length ? scenarios.reduce((b, s) => s.probability > b.probability ? s : b, scenarios[0]) : null;
+
+  const body = `
+    ${baseCase ? `<p style="font-size:.85rem;color:var(--text-secondary);margin-bottom:.75rem">${esc(baseCase)}</p>` : ''}
+    ${top ? `
+      <div class="scenario-item">
+        <div class="scenario-header">
+          <span class="scenario-name">${esc(top.name)}</span>
+          <span class="scenario-prob">${top.probability}%</span>
+        </div>
+        <div class="prob-track"><div class="probability-bar" style="--prob:${top.probability}"></div></div>
+      </div>` : `<p class="empty-msg">No scenarios available</p>`}`;
+  return teaserCard('Outlook', body, 'outlook', date, 'View full outlook');
+}
+
+function renderDeepDiveTeaser(deep_dive, date) {
+  const takeaway = deep_dive?.summary_takeaway;
+  const fallback = truncate(deep_dive?.full_text, 160);
+  const text = takeaway || fallback || 'No deep dive available.';
+  const body = `<p style="font-size:.88rem;line-height:1.6;color:var(--text-primary);margin-bottom:.75rem">${esc(text)}</p>`;
+  return teaserCard('Deep Dive', body, 'deepdive', date, 'Read full analysis');
+}
+
+function renderChartsPreviewCard(date) {
+  return `
+    <div class="section-card teaser-card full-width">
+      <div class="section-header"><span class="section-title">Historical Trend</span></div>
+      <div class="section-body">
+        <div id="charts-root" class="chart-preview"></div>
+        <a class="teaser-link" href="${viewLink('charts', date)}">View all charts →</a>
+      </div>
+    </div>`;
+}
+
+function renderDashboard(briefing, date) {
+  const { summary, meta, deep_dive, outlook, prediction_result } = briefing;
+  return [
+    renderHeroStrip(summary),
+    `<div class="dashboard-teasers full-width">`,
+    renderSnapshotTeaser(summary, meta, date),
+    renderMoversTeaser(summary, date),
+    renderMacroTeaser(summary, date),
+    renderOutlookTeaser(outlook, date),
+    `</div>`,
+    renderDeepDiveTeaser(deep_dive, date),
+    renderPredictionResult(prediction_result, date),
+    renderChartsPreviewCard(date),
+  ].join('');
+}
+
+function renderBackLink(date, view) {
+  return `
+    <div class="back-link-bar full-width">
+      <a class="back-link" href="${viewLink('dashboard', date)}">← Back to Dashboard</a>
+      <span class="detail-title">${esc(VIEW_TITLES[view] ?? '')}</span>
+    </div>`;
+}
+
+function renderDetailView(briefing, view, isMobile) {
+  const { summary, meta, triggers, deep_dive, outlook } = briefing;
+  switch (view) {
+    case 'snapshot': return renderSnapshot(summary, meta);
+    case 'movers': return renderMovers(summary);
+    case 'macro': return renderMacro(summary, triggers, isMobile);
+    case 'outlook': return renderOutlook(outlook, isMobile);
+    case 'deepdive': return renderDeepDive(deep_dive, meta, isMobile);
+    case 'charts': return `
+      <div class="section-card full-width" id="section-charts">
+        <div class="section-header"><span class="section-title">Historical Charts</span></div>
+        <div id="charts-root"></div>
+      </div>`;
+    case 'tracker': return `
+      <div class="section-card full-width" id="section-tracker">
+        <div class="section-header"><span class="section-title">Prediction Accuracy</span></div>
+        <div id="tracker-root" style="padding:1.25rem"></div>
+      </div>`;
+    default: return '';
+  }
 }
 
 function wireCollapsibles(isMobile) {
@@ -342,7 +538,7 @@ function wireCollapsibles(isMobile) {
 }
 
 // ── Main render ───────────────────────────────────────────────────
-async function renderBriefing(briefing) {
+async function renderPage(briefing, view, date) {
   const isMobile = window.innerWidth < 768;
   const seo = buildSeo(briefing);
   document.title = seo.title;
@@ -351,34 +547,26 @@ async function renderBriefing(briefing) {
   const root = document.getElementById('briefing-root');
   root.innerHTML = '';
 
-  // Admin notes
   const adminDecision = adminNotesDecision(briefing, DataAccess.config.adminViewEnabled);
+  const adminHTML = adminDecision.show
+    ? `<div class="section-card full-width" style="margin-top:1.25rem">
+         <div class="section-header"><span class="section-title">Admin Notes</span></div>
+         <div class="section-body"><p style="font-size:.85rem">${esc(adminDecision.notes)}</p></div>
+       </div>`
+    : '';
 
-  const sections = [
-    renderHeroStrip(briefing.summary),
-    `<div class="briefing-grid">`,
-    renderSnapshot(briefing.summary, briefing.meta),
-    renderMovers(briefing.summary),
-    renderMacro(briefing.summary, briefing.triggers, isMobile),
-    renderDeepDive(briefing.deep_dive, isMobile),
-    renderOutlook(briefing.outlook, isMobile),
-    renderPredictionResult(briefing.prediction_result),
-    `</div>`,
-    `<div class="section-card full-width" id="section-charts" style="margin-top:1.25rem">
-       <div class="section-header"><span class="section-title">Historical Charts</span></div>
-       <div id="charts-root"></div>
-     </div>`,
-    `<div class="section-card full-width" id="section-tracker" style="margin-top:1.25rem">
-       <div class="section-header"><span class="section-title">Prediction Accuracy</span></div>
-       <div id="tracker-root" style="padding:1.25rem"></div>
-     </div>`,
-    adminDecision.show ? `<div class="section-card full-width" style="margin-top:1.25rem">
-       <div class="section-header"><span class="section-title">Admin Notes</span></div>
-       <div class="section-body"><p style="font-size:.85rem">${esc(adminDecision.notes)}</p></div>
-     </div>` : '',
-  ];
+  const bodyHTML = view === 'dashboard'
+    ? renderDashboard(briefing, date) + adminHTML
+    : [
+        renderBackLink(date, view),
+        renderHeroStrip(briefing.summary),
+        `<div class="briefing-grid">`,
+        renderDetailView(briefing, view, isMobile),
+        `</div>`,
+        adminHTML,
+      ].join('');
 
-  root.innerHTML = `<div class="main-content">${sections.join('')}</div>`;
+  root.innerHTML = `<div class="main-content">${bodyHTML}</div>`;
   root.hidden = false;
   hideSkeleton();
 
@@ -401,16 +589,17 @@ async function bootstrap() {
   const params = new URLSearchParams(window.location.search);
   let requestedDate = params.get('date');
   const latestDate = DataAccess.getLatestDate(index);
+  const view = VIEWS.includes(params.get('view')) ? params.get('view') : 'dashboard';
 
   if (!requestedDate) {
     requestedDate = latestDate;
   } else if (!isDateAccessible(requestedDate, index)) {
     showError(`No briefing is available for "${esc(requestedDate)}".`);
-    populateNavigator(index, null);
+    populateNavigator(index, null, view);
     return;
   }
 
-  populateNavigator(index, requestedDate);
+  populateNavigator(index, requestedDate, view);
 
   if (!requestedDate) {
     showError('No briefings are available yet.');
@@ -434,10 +623,11 @@ async function bootstrap() {
     return;
   }
 
-  await renderBriefing(briefing);
+  await renderPage(briefing, view, requestedDate);
 
-  // Load charts and tracker after briefing is visible
-  initCharts().catch(() => {});
+  // Load charts/tracker after render — both self-guard when their mount
+  // point isn't present in the current view, so it's safe to call unconditionally.
+  initCharts({ compact: view !== 'charts' }).catch(() => {});
   initTracker(index).catch(() => {});
 }
 

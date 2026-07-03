@@ -1,0 +1,14 @@
+name = "nse-pulse-publish"
+main = "publish-worker.js"
+compatibility_date = "2026-07-03"
+
+[vars]
+ALLOWED_EMAIL = "bmdeshmukh18@gmail.com"
+
+[[routes]]
+pattern = "briefanalytics.bmdeshmukh18.in/api/publish*"
+zone_name = "bmdeshmukh18.in"
+
+# GITHUB_TOKEN is set as a secret, not stored here:
+#   npx wrangler secret put GITHUB_TOKEN
+# Use a fine-grained PAT scoped to Contents: Read/Write on this one repo only.
