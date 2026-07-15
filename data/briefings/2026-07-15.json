@@ -1,0 +1,190 @@
+{
+  "meta": {
+    "date": "2026-07-15",
+    "session_status": "Trading",
+    "market_tone": "Marginal gains; financials offset oil and geopolitical risk",
+    "sources": [
+      "Reuters",
+      "NSE",
+      "Moneycontrol",
+      "Economic Times",
+      "Investing.com"
+    ]
+  },
+  "summary": {
+    "nifty50": {
+      "close": 24078.5,
+      "change_pct": 0.11
+    },
+    "sensex": {
+      "close": 77185.43,
+      "change_pct": 0.17
+    },
+    "broader_market": {
+      "smallcap_pct": 0.7,
+      "midcap_pct": 0.3
+    },
+    "breadth": {
+      "nifty500_advances": null,
+      "nifty500_declines": null
+    },
+    "sectors": {
+      "leaders": [
+        "PSU Banks",
+        "Financial Services",
+        "Banks",
+        "Insurance"
+      ],
+      "laggards": [
+        "Information Technology"
+      ],
+      "count_advanced": 11
+    },
+    "key_gainers": [
+      {
+        "symbol": "ETERNAL",
+        "change_pct": null
+      },
+      {
+        "symbol": "ULTRACEMCO",
+        "change_pct": null
+      },
+      {
+        "symbol": "SBIN",
+        "change_pct": null
+      },
+      {
+        "symbol": "BAJFINANCE",
+        "change_pct": null
+      },
+      {
+        "symbol": "TECHM",
+        "change_pct": null
+      }
+    ],
+    "key_losers": [
+      {
+        "symbol": "POWERGRID",
+        "change_pct": null
+      },
+      {
+        "symbol": "LT",
+        "change_pct": null
+      },
+      {
+        "symbol": "TATASTEEL",
+        "change_pct": null
+      },
+      {
+        "symbol": "INFY",
+        "change_pct": null
+      },
+      {
+        "symbol": "NTPC",
+        "change_pct": null
+      }
+    ],
+    "institutional_flows": {
+      "fii_net_cr": null,
+      "dii_net_cr": null
+    },
+    "macro": {
+      "brent_crude": 85.5,
+      "india_10y_yield": 6.775,
+      "usd_inr": null,
+      "gold": 4030.5,
+      "india_vix": 13.27,
+      "us_10y_yield": 4.585
+    },
+    "global_indices": [
+      {
+        "name": "Dow Jones",
+        "change_pct": 0.02
+      },
+      {
+        "name": "Nasdaq",
+        "change_pct": 0.9
+      },
+      {
+        "name": "Nikkei 225",
+        "change_pct": 1.5
+      },
+      {
+        "name": "Hang Seng",
+        "change_pct": null
+      },
+      {
+        "name": "STOXX 600",
+        "change_pct": 0.17
+      }
+    ]
+  },
+  "triggers": {
+    "domestic": [
+      "Financial-sector rebound ahead of key earnings",
+      "ICICI Prudential Life profit growth",
+      "June CPI inflation at 4.38%",
+      "Monsoon deficit concerns",
+      "Strong credit growth and automobile demand"
+    ],
+    "global": [
+      "Softer-than-expected U.S. June CPI",
+      "Escalating U.S.-Iran conflict",
+      "Brent crude above $85 per barrel",
+      "Strong U.S. bank earnings",
+      "Divergent technology signals from ASML and IBM"
+    ]
+  },
+  "deep_dive": {
+    "full_text": "Confirmed facts: Indian equities closed marginally higher as financials, banks, PSU banks and insurance stocks advanced, while IT declined after IBM's weak outlook. Smallcaps rose about 0.7% and midcaps about 0.3%, with 11 of 16 major sectors advancing. India VIX eased to about 13.27. June CPI inflation was 4.38%, while an approximately 18% monsoon deficit was cited as a macro risk. Brent traded near $85.5 as U.S.-Iran hostilities escalated. Softer U.S. inflation supported global equities and lowered immediate Fed tightening fears, while the U.S. 10-year yield stayed near 4.58%-4.59%. Reasoned interpretation: The market's late fade shows weak conviction. Financial earnings can support selective upside, but sustained high crude threatens the rupee, imported inflation, margins and RBI flexibility. The next move depends heavily on geopolitical developments, oil, financial-sector earnings and U.S. inflation data.",
+    "summary_takeaway": "Financials stabilised the market, but crude and geopolitical risks prevented a convincing breakout."
+  },
+  "outlook": {
+    "base_case": "Range-bound to mildly positive with elevated intraday volatility",
+    "scenarios": [
+      {
+        "name": "Consolidation or mildly positive",
+        "probability": 45,
+        "range_low": 24000,
+        "range_high": 24220
+      },
+      {
+        "name": "Risk-off decline",
+        "probability": 30,
+        "range_low": 23850,
+        "range_high": 24020
+      },
+      {
+        "name": "Bullish breakout",
+        "probability": 25,
+        "range_low": 24180,
+        "range_high": 24350
+      }
+    ],
+    "support_levels": [
+      24000,
+      23950,
+      23850
+    ],
+    "resistance_levels": [
+      24150,
+      24220,
+      24350
+    ],
+    "key_watch": [
+      "Brent crude and Strait of Hormuz developments",
+      "Financial-sector earnings",
+      "U.S. PPI and Treasury yields",
+      "USD/INR and RBI intervention",
+      "India VIX around 13-14",
+      "Broader-market breadth"
+    ]
+  },
+  "prediction_result": {
+    "actual_close": null,
+    "actual_change_pct": null,
+    "matched_scenario": null,
+    "accuracy_tag": null,
+    "verified_at": null
+  }
+}
