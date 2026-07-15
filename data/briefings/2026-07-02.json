@@ -5,31 +5,77 @@
     "market_tone": "Constructive risk-on day with macro-supported recovery"
   },
   "summary": {
-    "nifty50": { "close": 24175.70, "change_pct": 0.71 },
-    "sensex": { "close": 77502.12, "change_pct": 0.75 },
-    "broader_market": { "smallcap_pct": 1.2, "midcap_pct": 0.5 },
-    "breadth": { "nifty500_advances": 13, "nifty500_declines": 3 },
+    "nifty50": {
+      "close": 24175.7,
+      "change_pct": 0.71
+    },
+    "sensex": {
+      "close": 77502.12,
+      "change_pct": 0.75
+    },
+    "broader_market": {
+      "smallcap_pct": 1.2,
+      "midcap_pct": 0.5
+    },
+    "breadth": {
+      "nifty500_advances": 13,
+      "nifty500_declines": 3
+    },
     "sectors": {
-      "leaders": ["IT", "Banking"],
+      "leaders": [
+        "IT",
+        "Banking"
+      ],
       "laggards": [],
       "count_advanced": 13
     },
     "key_gainers": [
-      { "symbol": "INFY", "change_pct": 5.6 },
-      { "symbol": "TCS", "change_pct": 4.3 },
-      { "symbol": "DHANBANK", "change_pct": 5.0 },
-      { "symbol": "JKNBANK", "change_pct": 5.4 }
+      {
+        "symbol": "INFY",
+        "change_pct": 5.6
+      },
+      {
+        "symbol": "TCS",
+        "change_pct": 4.3
+      },
+      {
+        "symbol": "DHANBANK",
+        "change_pct": 5
+      },
+      {
+        "symbol": "JKNBANK",
+        "change_pct": 5.4
+      }
     ],
     "key_losers": [
-      { "symbol": "RELIANCE", "change_pct": -0.5 },
-      { "symbol": "HDFCBANK", "change_pct": -0.3 }
+      {
+        "symbol": "RELIANCE",
+        "change_pct": -0.5
+      },
+      {
+        "symbol": "HDFCBANK",
+        "change_pct": -0.3
+      }
     ],
-    "institutional_flows": { "fii_net_cr": null, "dii_net_cr": null },
-    "macro": { "brent_crude": 70.5, "india_10y_yield": null }
+    "institutional_flows": {
+      "fii_net_cr": null,
+      "dii_net_cr": null
+    },
+    "macro": {
+      "brent_crude": 70.5,
+      "india_10y_yield": null
+    }
   },
   "triggers": {
-    "domestic": ["IT sector rebound", "Banking sector strength", "Lower crude oil prices"],
-    "global": ["Positive U.S.-Iran talks progress", "Asian tech/AI selloff"]
+    "domestic": [
+      "IT sector rebound",
+      "Banking sector strength",
+      "Lower crude oil prices"
+    ],
+    "global": [
+      "Positive U.S.-Iran talks progress",
+      "Asian tech/AI selloff"
+    ]
   },
   "deep_dive": {
     "full_text": "Indian benchmarks advanced strongly: Nifty 50 closed at 24,175.70, up 0.71%, and Sensex closed at 77,502.12, up 0.75%. Reuters reported that India outperformed broader Asia, where Asian stocks fell 2.4% and South Korea's KOSPI dropped about 8% amid a tech/AI selloff.\n\nBrent crude fell below $71/bbl after U.S.-Iran indirect talks in Doha showed positive progress. This was the most important macro driver for India because lower oil reduces inflation pressure, current-account pressure, fiscal stress, and rupee vulnerability.\n\nNifty IT rose 4.6%, with Infosys up 5.6% and TCS up 4.3%. The rally followed a four-session fall in IT and appears to be value-buying rather than a complete reversal of structural concerns.\n\nThe rupee remained weak despite the oil tailwind. Reuters reported USD/INR closed at 95.3925, down 0.1% on the day and marking a fourth straight losing session. The pressure came from merchant dollar demand and arbitrage flows, despite a softer dollar and likely RBI presence through state-run banks.\n\nOil also remained supportive globally. Reuters reported oil fell for a third straight day, with Brent around $70.33/bbl and WTI around $67.20/bbl, helped by easing supply-disruption fears after U.S.-Iran talks.\n\nThis was a constructive risk-on day for Indian equities, but the rally was not purely domestic. India benefited from a mix of macro relief, sector rebound, and global rotation away from AI-heavy Asian markets. The fall in crude was especially important because it improves India's macro risk profile.\n\nThe IT rebound helped headline indices, but it should be treated as a relief rally until earnings commentary confirms demand recovery. The earlier concerns around U.S. client spending, AI disruption, and valuation pressure have not disappeared.\n\nThe rupee's continued weakness is a warning sign. If USD/INR moves toward 95.80-96.00, it may partially offset the benefit from lower crude and create caution for foreign investors.\n\nDomestic liquidity data was not fully available in a clean final form at the time of drafting. NSE's FII/DII page was checked, but the final net values were not visible in the page output. For tracker accuracy, mark 2 July FII/DII as pending official confirmation."
@@ -37,20 +83,47 @@
   "outlook": {
     "base_case": "Mildly positive to range-bound",
     "scenarios": [
-      { "name": "Range-bound with positive bias", "probability": 45, "range_low": 24000, "range_high": 24350 },
-      { "name": "Further upside toward 24,300-24,350", "probability": 35, "range_low": 24300, "range_high": 24350 },
-      { "name": "Downside reversal", "probability": 20, "range_low": 23800, "range_high": 24000 }
+      {
+        "name": "Range-bound with positive bias",
+        "probability": 45,
+        "range_low": 24000,
+        "range_high": 24350
+      },
+      {
+        "name": "Further upside toward 24,300-24,350",
+        "probability": 35,
+        "range_low": 24300,
+        "range_high": 24350
+      },
+      {
+        "name": "Downside reversal",
+        "probability": 20,
+        "range_low": 23800,
+        "range_high": 24000
+      }
     ],
-    "support_levels": [24050, 24000],
-    "resistance_levels": [24250, 24350],
-    "key_watch": ["Brent crude below $71/bbl", "IT sector relief rally sustainability", "U.S.-Iran talks progress", "Rupee weakness (USD/INR)", "U.S. payrolls/Fed pricing"]
+    "support_levels": [
+      24050,
+      24000
+    ],
+    "resistance_levels": [
+      24250,
+      24350
+    ],
+    "key_watch": [
+      "Brent crude below $71/bbl",
+      "IT sector relief rally sustainability",
+      "U.S.-Iran talks progress",
+      "Rupee weakness (USD/INR)",
+      "U.S. payrolls/Fed pricing"
+    ]
   },
   "prediction_result": {
-    "actual_close": 24175.70,
-    "actual_change_pct": 0.71,
+    "actual_close": 24270.85,
+    "actual_change_pct": 0.39,
     "matched_scenario": "Range-bound with positive bias",
     "accuracy_tag": "Correct",
-    "verified_at": "2026-07-02T15:30:00Z"
+    "verified_at": "2026-07-15T12:48:37.363Z"
   },
   "admin_notes": "Sources used: Reuters: Indian shares outperform Asia as oil drops, IT rebounds; Reuters: Oil falls for a third straight day after U.S.-Iran talks; Reuters: Rupee extends losing streak despite softer dollar; Reuters: Global markets ahead of U.S. payrolls; NSE India: FII/FPI & DII activity page checked for official flow status. Historical Tracker Data Points: Date: Thursday, 2 July 2026; Session status: Valid NSE trading session; Nifty 50: 24,175.70 / +0.71%; Sensex: 77,502.12 / +0.75%; Broader market: Smallcap +1.2%, Midcap +0.5%; Sector leaders: IT, select banks, broad market cyclicals; Sector laggards: Not dominant; 13 of 16 sectors gained; Nifty IT: +4.6%; Notable gainers: Infosys +5.6%, TCS +4.3%, J&K Bank +5.4%, Dhanlaxmi Bank +5.0%; FII/DII activity: Pending final official confirmation; INR/USD: 95.3925, rupee down 0.1%; Brent crude: Below $71/bbl; WTI crude: Around $67.20/bbl; Dollar index: Around 101.05-101.00 zone; Global equities: Broader Asia down 2.4%; KOSPI down about 8%; Key domestic trigger: IT rebound and broad sector participation; Key global trigger: Lower crude after U.S.-Iran talk progress; Reason market gained: Lower oil + IT value-buying + India's relative resilience during Asian tech selloff; Main risk: Rupee weakness and U.S. payroll/Fed-rate sensitivity."
 }
