@@ -1,0 +1,175 @@
+{
+  "meta": {
+    "date": "2026-07-14",
+    "session_status": "Trading",
+    "market_tone": "Oil-driven risk-off decline with broad sector weakness",
+    "sources": [
+      "Reuters",
+      "NSE",
+      "AP News",
+      "Moneycontrol",
+      "5paisa",
+      "Trading Economics",
+      "Investing.com",
+      "MarketWatch",
+      "Yahoo Finance",
+      "Barron's"
+    ]
+  },
+  "summary": {
+    "nifty50": {
+      "close": 24052.05,
+      "change_pct": -0.66
+    },
+    "sensex": {
+      "close": 77054.94,
+      "change_pct": -0.72
+    },
+    "broader_market": {
+      "smallcap_pct": -1,
+      "midcap_pct": -0.4
+    },
+    "breadth": {
+      "nifty500_advances": null,
+      "nifty500_declines": null
+    },
+    "sectors": {
+      "leaders": [
+        "Pharmaceuticals"
+      ],
+      "laggards": [
+        "Autos",
+        "Banks",
+        "Financial services"
+      ],
+      "count_advanced": 4
+    },
+    "key_gainers": [
+      {
+        "symbol": "BIOCON",
+        "change_pct": 6.4
+      }
+    ],
+    "key_losers": [
+      {
+        "symbol": "HCLTECH",
+        "change_pct": -4.5
+      },
+      {
+        "symbol": "SBIN",
+        "change_pct": -2.13
+      }
+    ],
+    "institutional_flows": {
+      "fii_net_cr": null,
+      "dii_net_cr": null
+    },
+    "macro": {
+      "brent_crude": 86.36,
+      "india_10y_yield": 6.79,
+      "usd_inr": 96.2375,
+      "gold": 4020.34,
+      "india_vix": null,
+      "us_10y_yield": 4.63
+    },
+    "global_indices": [
+      {
+        "name": "Dow Jones",
+        "change_pct": -0.3
+      },
+      {
+        "name": "Nasdaq",
+        "change_pct": -1.6
+      },
+      {
+        "name": "Nikkei 225",
+        "change_pct": 0.7
+      },
+      {
+        "name": "Hang Seng",
+        "change_pct": 0.6
+      },
+      {
+        "name": "STOXX 600",
+        "change_pct": -0.7
+      }
+    ]
+  },
+  "triggers": {
+    "domestic": [
+      "Rupee weakened beyond 96 per dollar",
+      "Indian government bond yields rose",
+      "Banks, financials and autos declined",
+      "HCLTech demand uncertainty",
+      "Biocon block deal"
+    ],
+    "global": [
+      "US-Iran military escalation",
+      "Strait of Hormuz shipping risk",
+      "Brent crude at a one-month high",
+      "Hawkish Fed commentary",
+      "US CPI and Fed Chair testimony"
+    ]
+  },
+  "deep_dive": {
+    "full_text": "Confirmed facts: Nifty fell 0.66% to 24,052.05 and Sensex declined 0.72% to 77,054.94. Twelve of 16 major sectors fell; banks and financial services lost about 1.1%, autos 1.6%, midcaps 0.4% and smallcaps 1.0%. The rupee weakened to about 96.2375 per dollar, with Reuters reporting likely RBI intervention. India's 10-year yield rose by roughly 6 basis points to around 6.79%-6.81%. Brent reached about $86-$87 as US-Iran tensions and Strait of Hormuz risks escalated. The US 10-year yield was around 4.63%; Dow fell 0.3% and Nasdaq 1.6% in the prior session, while Nikkei rose about 0.7%, Hang Seng 0.6% and STOXX 600 fell 0.7%. Reasoned interpretation: The decline was an oil-and-inflation risk-off move. Higher crude weakened the rupee, lifted inflation and yield concerns, and hurt rate-sensitive and fuel-sensitive sectors. Nifty holding near 24,000 limits immediate technical damage, but another crude spike could deepen the correction.",
+    "summary_takeaway": "Crude oil is the decisive variable: below $84 can support a rebound, while a move toward $90 would deepen pressure on India-sensitive assets."
+  },
+  "outlook": {
+    "base_case": "Volatile and range-bound with a mild negative bias",
+    "scenarios": [
+      {
+        "name": "Range-bound with mild negative bias",
+        "probability": 40,
+        "range_low": 23950,
+        "range_high": 24200
+      },
+      {
+        "name": "Crude-led downside continuation",
+        "probability": 30,
+        "range_low": 23750,
+        "range_high": 24000
+      },
+      {
+        "name": "Relief rebound on softer oil and benign US CPI",
+        "probability": 25,
+        "range_low": 24150,
+        "range_high": 24400
+      },
+      {
+        "name": "Sharp geopolitical risk-off gap",
+        "probability": 5,
+        "range_low": 23500,
+        "range_high": 23800
+      }
+    ],
+    "support_levels": [
+      24000,
+      23850,
+      23600
+    ],
+    "resistance_levels": [
+      24200,
+      24300,
+      24400
+    ],
+    "key_watch": [
+      "Brent crude",
+      "Strait of Hormuz developments",
+      "US CPI",
+      "Fed Chair Kevin Warsh testimony",
+      "USD/INR",
+      "RBI intervention",
+      "India and US bond yields",
+      "FII and DII flows",
+      "Banks and autos breadth"
+    ]
+  },
+  "prediction_result": {
+    "actual_close": null,
+    "actual_change_pct": null,
+    "matched_scenario": null,
+    "accuracy_tag": null,
+    "verified_at": null
+  }
+}
