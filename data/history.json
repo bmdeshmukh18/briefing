@@ -152,6 +152,15 @@
       "dii_net_cr": null,
       "advances": 237,
       "declines": 261
+    },
+    {
+      "date": "2026-07-14",
+      "nifty_close": 24052.05,
+      "nifty_change_pct": -0.66,
+      "fii_net_cr": null,
+      "dii_net_cr": null,
+      "advances": null,
+      "declines": null
     }
   ]
 }
