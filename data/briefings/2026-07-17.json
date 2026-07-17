@@ -1,0 +1,179 @@
+{
+  "meta": {
+    "date": "2026-07-17",
+    "session_status": "Trading",
+    "market_tone": "Large-cap earnings rally; weak underlying breadth",
+    "sources": [
+      "Reuters",
+      "NSE",
+      "Moneycontrol",
+      "Kotak Neo",
+      "Trendlyne",
+      "Upstox",
+      "Trading Economics",
+      "Associated Press",
+      "Morningstar"
+    ]
+  },
+  "summary": {
+    "nifty50": {
+      "close": 24334.3,
+      "change_pct": 1.09
+    },
+    "sensex": {
+      "close": 78151.45,
+      "change_pct": 1.25
+    },
+    "broader_market": {
+      "smallcap_pct": -0.21,
+      "midcap_pct": null
+    },
+    "breadth": {
+      "nifty500_advances": 1632,
+      "nifty500_declines": 2419
+    },
+    "sectors": {
+      "leaders": [
+        "IT",
+        "Financial Services",
+        "Private Banks",
+        "Auto"
+      ],
+      "laggards": [
+        "Metals",
+        "Selected Healthcare",
+        "Small Caps"
+      ],
+      "count_advanced": null
+    },
+    "key_gainers": [
+      {
+        "symbol": "TECHM",
+        "change_pct": 4.1
+      },
+      {
+        "symbol": "JIOFIN",
+        "change_pct": 3.1
+      },
+      {
+        "symbol": "RELIANCE",
+        "change_pct": 2.4
+      }
+    ],
+    "key_losers": [
+      {
+        "symbol": "HINDALCO",
+        "change_pct": null
+      },
+      {
+        "symbol": "WELCORP",
+        "change_pct": -5.64
+      },
+      {
+        "symbol": "STARHEALTH",
+        "change_pct": -3.38
+      }
+    ],
+    "institutional_flows": {
+      "fii_net_cr": -376.41,
+      "dii_net_cr": 1017.89
+    },
+    "macro": {
+      "brent_crude": 85.77,
+      "india_10y_yield": 6.76,
+      "usd_inr": 96.28,
+      "gold": 3987.23,
+      "india_vix": 13.15,
+      "us_10y_yield": 4.53
+    },
+    "global_indices": [
+      {
+        "name": "Dow Jones",
+        "change_pct": -0.2
+      },
+      {
+        "name": "Nasdaq",
+        "change_pct": -1.5
+      },
+      {
+        "name": "Nikkei 225",
+        "change_pct": -4
+      },
+      {
+        "name": "Hang Seng",
+        "change_pct": -2.1
+      },
+      {
+        "name": "STOXX 600",
+        "change_pct": -0.6
+      }
+    ]
+  },
+  "triggers": {
+    "domestic": [
+      "Better-than-expected Tech Mahindra quarterly revenue",
+      "Jio Financial profit beat",
+      "Buying in private banks and Reliance Industries",
+      "DII buying offset modest FII selling"
+    ],
+    "global": [
+      "Semiconductor and AI-stock sell-off",
+      "Escalating U.S.-Iran conflict",
+      "Brent crude near 86 dollars per barrel",
+      "Higher inflation and U.S. rate concerns"
+    ]
+  },
+  "deep_dive": {
+    "full_text": "Confirmed facts: The Nifty 50 rose 1.09% to 24,334.30 and the Sensex gained 1.25% to 78,151.45, led by IT, financials and heavyweight stocks after stronger results from Tech Mahindra and Jio Financial. Reliance Industries rose ahead of earnings. FIIs sold a provisional Rs 376.41 crore while DIIs bought Rs 1,017.89 crore. The rupee closed near 96.28 per dollar, Brent traded near 85.77 dollars, India VIX rose to 13.15 and India’s 10-year yield was around 6.76%. Global technology shares weakened sharply, with the Nasdaq down 1.5% in the prior U.S. session, the Nikkei down about 4%, Hang Seng down about 2.1% and STOXX 600 down about 0.6%. Reasoned interpretation: India’s outperformance was earnings-led and concentrated in large caps rather than a broad risk-on move. Negative breadth, falling small caps and higher volatility indicate caution. High crude, rupee weakness, global technology stress and geopolitical escalation remain important downside risks, while heavyweight earnings are the main near-term upside catalyst.",
+    "summary_takeaway": "Large-cap earnings powered the rally, but weak breadth, high crude and rupee pressure keep the next-session setup fragile."
+  },
+  "outlook": {
+    "base_case": "Range-bound to mildly positive, led by heavyweight earnings",
+    "scenarios": [
+      {
+        "name": "Earnings-supported continuation",
+        "probability": 40,
+        "range_low": 24350,
+        "range_high": 24550
+      },
+      {
+        "name": "Post-rally consolidation",
+        "probability": 35,
+        "range_low": 24200,
+        "range_high": 24400
+      },
+      {
+        "name": "Oil and geopolitical reversal",
+        "probability": 25,
+        "range_low": 24000,
+        "range_high": 24200
+      }
+    ],
+    "support_levels": [
+      24200,
+      24050,
+      24000
+    ],
+    "resistance_levels": [
+      24370,
+      24500,
+      24550
+    ],
+    "key_watch": [
+      "Reliance Industries earnings",
+      "HDFC Bank and ICICI Bank earnings",
+      "Brent crude and Strait of Hormuz developments",
+      "USD/INR and RBI intervention",
+      "Global semiconductor sentiment",
+      "FII and DII flows",
+      "Small- and mid-cap breadth"
+    ]
+  },
+  "prediction_result": {
+    "actual_close": null,
+    "actual_change_pct": null,
+    "matched_scenario": null,
+    "accuracy_tag": null,
+    "verified_at": null
+  }
+}
